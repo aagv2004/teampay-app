@@ -49,6 +49,10 @@ class GroupDetailScreen extends StatelessWidget {
             },
             icon: const Icon(Icons.edit_rounded),
           ),
+          IconButton(
+            onPressed: () => _confirmDeleteGroup(context, groupId),
+            icon: const Icon(Icons.delete_rounded),
+          ),
         ],
       ),
       body: ListView(
@@ -409,4 +413,34 @@ class _EmptyState extends StatelessWidget {
       ),
     );
   }
+}
+
+void _confirmDeleteGroup(BuildContext context, String groupId) {
+  showDialog(
+    context: context,
+    builder: (dialogContext) {
+      return AlertDialog(
+        title: const Text('Eliminar grupo'),
+        content: const Text(
+          '¿Seguro que quieres eliminar este grupo? Esta acción no se puede deshacer.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton.icon(
+            onPressed: () {
+              context.read<GroupProvider>().deleteGroup(groupId);
+
+              Navigator.pop(dialogContext);
+              Navigator.pop(context);
+            },
+            icon: const Icon(Icons.delete_rounded),
+            label: const Text('Eliminar'),
+          ),
+        ],
+      );
+    },
+  );
 }
