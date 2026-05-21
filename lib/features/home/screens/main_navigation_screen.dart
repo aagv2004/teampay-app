@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../shared/widgets/app_bottom_nav.dart';
-import '../../expenses/screens/add_expense_screen.dart';
+import '../../expenses/screens/expenses_screen.dart';
 import '../../groups/screens/groups_screen.dart';
 import '../../profile/screens/profile_screen.dart';
 import 'home_screen.dart';
@@ -18,7 +18,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   final screens = const [
     HomeScreen(),
     GroupsScreen(),
-    AddExpenseScreen(),
+    ExpensesScreen(),
     ProfileScreen(),
   ];
 

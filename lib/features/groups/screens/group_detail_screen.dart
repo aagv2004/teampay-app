@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:teampayapp/core/models/debt.dart';
 import 'package:teampayapp/core/models/member.dart';
 import 'package:teampayapp/features/groups/providers/group_provider.dart';
 import '../../../core/constants/app_colors.dart';
 import 'edit_group_screen.dart';
+import '../../expenses/screens/add_expense_screen.dart';
 
 class GroupDetailScreen extends StatelessWidget {
   final String groupId;
@@ -55,6 +57,7 @@ class GroupDetailScreen extends StatelessWidget {
           ),
         ],
       ),
+
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
@@ -104,6 +107,19 @@ class GroupDetailScreen extends StatelessWidget {
                     'Debe a ${toMember.name} · Pagado: \$${debt.paidAmount.toStringAsFixed(0)} · ${debt.paymentMethodLabel}',
                 isPaid: debt.isPaid,
                 isPartial: debt.isPartiallyPaid,
+                action: !debt.isPaid
+                    ? TextButton.icon(
+                        onPressed: () {
+                          _showRegisterPaymentSheet(
+                            context: context,
+                            groupId: group.id,
+                            debt: debt,
+                          );
+                        },
+                        icon: const Icon(Icons.payments_rounded),
+                        label: const Text('Registrar pago'),
+                      )
+                    : null,
               );
             }),
           const SizedBox(height: 18),
@@ -131,7 +147,14 @@ class GroupDetailScreen extends StatelessWidget {
       ),
 
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {},
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => AddExpenseScreen(groupId: group.id),
+            ),
+          );
+        },
         icon: const Icon(Icons.add_rounded),
         label: const Text('Gasto'),
       ),
@@ -250,6 +273,7 @@ class _DebtTile extends StatelessWidget {
   final String detail;
   final bool isPaid;
   final bool isPartial;
+  final Widget? action;
 
   const _DebtTile({
     required this.name,
@@ -258,6 +282,7 @@ class _DebtTile extends StatelessWidget {
     required this.detail,
     required this.isPaid,
     required this.isPartial,
+    this.action,
   });
 
   @override
@@ -269,30 +294,52 @@ class _DebtTile extends StatelessWidget {
         : AppColors.primary;
 
     return Card(
-      child: ListTile(
-        leading: const CircleAvatar(
-          backgroundColor: AppColors.avatarBackground,
-          child: Icon(Icons.person_rounded, color: AppColors.primary),
-        ),
-        title: Text(name, style: const TextStyle(fontWeight: FontWeight.w800)),
-        subtitle: Text(detail),
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Column(
           children: [
-            Text(
-              amount,
-              style: TextStyle(color: statusColor, fontWeight: FontWeight.w900),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              status,
-              style: TextStyle(
-                color: statusColor,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
+            ListTile(
+              leading: const CircleAvatar(
+                backgroundColor: AppColors.avatarBackground,
+                child: Icon(Icons.person_rounded, color: AppColors.primary),
+              ),
+              title: Text(
+                name,
+                style: const TextStyle(fontWeight: FontWeight.w800),
+              ),
+              subtitle: Text(detail),
+              trailing: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    amount,
+                    style: TextStyle(
+                      color: statusColor,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    status,
+                    style: TextStyle(
+                      color: statusColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
               ),
             ),
+
+            if (action != null)
+              Align(
+                alignment: Alignment.centerRight,
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: action!,
+                ),
+              ),
           ],
         ),
       ),
@@ -440,6 +487,139 @@ void _confirmDeleteGroup(BuildContext context, String groupId) {
             label: const Text('Eliminar'),
           ),
         ],
+      );
+    },
+  );
+}
+
+void _showRegisterPaymentSheet({
+  required BuildContext context,
+  required String groupId,
+  required Debt debt,
+}) {
+  final amountController = TextEditingController();
+  PaymentMethod selectedMethod = PaymentMethod.transfer;
+
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    builder: (sheetContext) {
+      return StatefulBuilder(
+        builder: (context, setModalState) {
+          return Padding(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 20,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Registrar pago',
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Pendiente: \$${debt.remainingAmount.toStringAsFixed(0)}',
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 18),
+
+                TextField(
+                  controller: amountController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Monto pagado',
+                    hintText: 'Ej: 5000',
+                    prefixIcon: Icon(Icons.attach_money_rounded),
+                  ),
+                ),
+
+                const SizedBox(height: 18),
+
+                DropdownButtonFormField<PaymentMethod>(
+                  value: selectedMethod,
+                  decoration: const InputDecoration(
+                    labelText: 'Método de pago',
+                    prefixIcon: Icon(Icons.payments_rounded),
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                      value: PaymentMethod.transfer,
+                      child: Text('Transferencia'),
+                    ),
+                    DropdownMenuItem(
+                      value: PaymentMethod.cash,
+                      child: Text('Efectivo'),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    if (value == null) return;
+
+                    setModalState(() {
+                      selectedMethod = value;
+                    });
+                  },
+                ),
+
+                const SizedBox(height: 22),
+
+                SizedBox(
+                  width: double.infinity,
+                  height: 54,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      final amountText = amountController.text
+                          .trim()
+                          .replaceAll('.', '');
+                      final amount = double.tryParse(amountText);
+
+                      if (amount == null || amount <= 0) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Ingresa un monto válido'),
+                          ),
+                        );
+                        return;
+                      }
+
+                      if (amount > debt.remainingAmount) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'El pago no puede superar el saldo pendiente',
+                            ),
+                          ),
+                        );
+                        return;
+                      }
+
+                      context.read<GroupProvider>().registerDebtPayment(
+                        groupId: groupId,
+                        debtId: debt.id,
+                        paymentAmount: amount,
+                        paymentMethod: selectedMethod,
+                      );
+
+                      Navigator.pop(sheetContext);
+                    },
+                    icon: const Icon(Icons.check_rounded),
+                    label: const Text(
+                      'Guardar pago',
+                      style: TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       );
     },
   );

@@ -21,6 +21,28 @@ class Debt {
     this.paymentMethod,
   });
 
+  Debt copyWith({
+    String? id,
+    String? expenseId,
+    String? groupId,
+    String? fromMemberId,
+    String? toMemberId,
+    double? amount,
+    double? paidAmount,
+    PaymentMethod? paymentMethod,
+  }) {
+    return Debt(
+      id: id ?? this.id,
+      expenseId: expenseId ?? this.expenseId,
+      groupId: groupId ?? this.groupId,
+      fromMemberId: fromMemberId ?? this.fromMemberId,
+      toMemberId: toMemberId ?? this.toMemberId,
+      amount: amount ?? this.amount,
+      paidAmount: paidAmount ?? this.paidAmount,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
+    );
+  }
+
   double get remainingAmount {
     final remaining = amount - paidAmount;
     return remaining < 0 ? 0 : remaining;
