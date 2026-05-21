@@ -161,7 +161,7 @@ class GroupProvider extends ChangeNotifier {
     final group = _groups[groupIndex];
 
     final updatedDebts = group.debts.map((debt) {
-      if (debt.id == debtId) return debt;
+      if (debt.id != debtId) return debt;
 
       final newPaidAmount = debt.paidAmount + paymentAmount;
 
