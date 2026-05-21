@@ -2,21 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/models/member.dart';
 import '../providers/group_provider.dart';
 
-class CreateGroupScreen extends StatefulWidget {
-  const CreateGroupScreen({super.key});
+class EditGroupScreen extends StatefulWidget {
+  final String groupId;
+
+  const EditGroupScreen({super.key, required this.groupId});
 
   @override
-  State<CreateGroupScreen> createState() => _CreateGroupScreenState();
+  State<EditGroupScreen> createState() => _EditGroupScreenState();
 }
 
-class _CreateGroupScreenState extends State<CreateGroupScreen> {
+class _EditGroupScreenState extends State<EditGroupScreen> {
   final _groupNameController = TextEditingController();
   final _memberNameController = TextEditingController();
 
-  final List<String> _members = ['Alejandro'];
-  int _ownerIndex = 0;
+  final List<Member> _members = [];
+  String? _ownerMemberId;
+
+  bool _loaded = false;
 
   @override
   void dispose() {
@@ -25,30 +30,51 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
     super.dispose();
   }
 
+  void _loadGroup() {
+    if (_loaded) return;
+
+    final group = context.read<GroupProvider>().getGroupById(widget.groupId);
+
+    if (group == null) return;
+
+    _groupNameController.text = group.name;
+    _members.addAll(group.members);
+    _ownerMemberId = group.ownerMemberId;
+
+    _loaded = true;
+  }
+
   void _addMember() {
     final name = _memberNameController.text.trim();
 
     if (name.isEmpty) return;
 
+    final member = Member(
+      id: DateTime.now().microsecondsSinceEpoch.toString(),
+      name: name,
+    );
+
     setState(() {
-      _members.add(name);
+      _members.add(member);
       _memberNameController.clear();
+
+      _ownerMemberId ??= member.id;
     });
   }
 
-  void _removeMember(int index) {
+  void _removeMember(Member member) {
     if (_members.length == 1) return;
 
     setState(() {
-      _members.removeAt(index);
+      _members.removeWhere((item) => item.id == member.id);
 
-      if (_ownerIndex >= _members.length) {
-        _ownerIndex = 0;
+      if (_ownerMemberId == member.id) {
+        _ownerMemberId = _members.first.id;
       }
     });
   }
 
-  void _createGroup() {
+  void _saveChanges() {
     final groupName = _groupNameController.text.trim();
 
     if (groupName.isEmpty) {
@@ -58,17 +84,20 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
       return;
     }
 
-    if (_members.isEmpty) {
+    if (_members.isEmpty || _ownerMemberId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Agrega al menos un integrante')),
+        const SnackBar(
+          content: Text('El grupo necesita al menos un integrante'),
+        ),
       );
       return;
     }
 
-    context.read<GroupProvider>().createGroup(
+    context.read<GroupProvider>().editGroup(
+      groupId: widget.groupId,
       name: groupName,
-      memberNames: _members,
-      ownerIndex: _ownerIndex,
+      members: _members,
+      ownerMemberId: _ownerMemberId!,
     );
 
     Navigator.pop(context);
@@ -76,26 +105,37 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    _loadGroup();
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final avatarBackground = isDark
         ? AppColors.darkSurfaceVariant
         : AppColors.lightSurfaceVariant;
 
+    final group = context.watch<GroupProvider>().getGroupById(widget.groupId);
+
+    if (group == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Grupo no encontrado')),
+        body: const Center(child: Text('No se pudo encontrar este grupo.')),
+      );
+    }
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Crear grupo')),
+      appBar: AppBar(title: const Text('Editar grupo')),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
           const Text(
-            'Nuevo grupo',
+            'Editar grupo',
             style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
           ),
 
           const SizedBox(height: 6),
 
           const Text(
-            'Crea un grupo para dividir gastos con amigos, compañeros o familia.',
+            'Actualiza el nombre, integrantes y owner del grupo.',
             style: TextStyle(
               color: AppColors.textSecondary,
               fontWeight: FontWeight.w600,
@@ -108,7 +148,6 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
             controller: _groupNameController,
             decoration: const InputDecoration(
               labelText: 'Nombre del grupo',
-              hintText: 'Ej: Viaje escolar',
               prefixIcon: Icon(Icons.groups_rounded),
             ),
           ),
@@ -138,10 +177,8 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
 
           const SizedBox(height: 10),
 
-          ..._members.asMap().entries.map((entry) {
-            final index = entry.key;
-            final member = entry.value;
-            final isOwner = index == _ownerIndex;
+          ..._members.map((member) {
+            final isOwner = member.id == _ownerMemberId;
 
             return Card(
               child: ListTile(
@@ -157,7 +194,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                   ),
                 ),
                 title: Text(
-                  member,
+                  member.name,
                   style: const TextStyle(fontWeight: FontWeight.w800),
                 ),
                 subtitle: isOwner
@@ -166,21 +203,21 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Radio<int>(
-                      value: index,
-                      groupValue: _ownerIndex,
+                    Radio<String>(
+                      value: member.id,
+                      groupValue: _ownerMemberId,
                       onChanged: (value) {
                         if (value == null) return;
 
                         setState(() {
-                          _ownerIndex = value;
+                          _ownerMemberId = value;
                         });
                       },
                     ),
                     IconButton(
                       onPressed: _members.length == 1
                           ? null
-                          : () => _removeMember(index),
+                          : () => _removeMember(member),
                       icon: const Icon(Icons.close_rounded),
                     ),
                   ],
@@ -194,10 +231,10 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
           SizedBox(
             height: 54,
             child: ElevatedButton.icon(
-              onPressed: _createGroup,
-              icon: const Icon(Icons.check_rounded),
+              onPressed: _saveChanges,
+              icon: const Icon(Icons.save_rounded),
               label: const Text(
-                'Crear grupo',
+                'Guardar cambios',
                 style: TextStyle(fontWeight: FontWeight.w800),
               ),
             ),

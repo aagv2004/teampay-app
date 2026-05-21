@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:teampayapp/core/models/member.dart';
+import 'package:teampayapp/features/groups/providers/group_provider.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../core/mock/mock_data.dart';
+import 'edit_group_screen.dart';
 
 class GroupDetailScreen extends StatelessWidget {
   final String groupId;
@@ -10,7 +12,14 @@ class GroupDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final group = mockGroups.firstWhere((group) => group.id == groupId);
+    final group = context.watch<GroupProvider>().getGroupById(groupId);
+
+    if (group == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Grupo no encontrado')),
+        body: const Center(child: Text('No se pudo encontrar este grupo')),
+      );
+    }
 
     final owner = group.members.firstWhere(
       (member) => member.id == group.ownerMemberId,
@@ -26,7 +35,22 @@ class GroupDetailScreen extends StatelessWidget {
         .fold<double>(0, (sum, debt) => sum + debt.remainingAmount);
 
     return Scaffold(
-      appBar: AppBar(title: Text(group.name)),
+      appBar: AppBar(
+        title: Text(group.name),
+        actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => EditGroupScreen(groupId: group.id),
+                ),
+              );
+            },
+            icon: const Icon(Icons.edit_rounded),
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [

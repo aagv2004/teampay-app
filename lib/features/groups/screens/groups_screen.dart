@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../core/mock/mock_data.dart';
+import 'package:provider/provider.dart';
+import 'package:teampayapp/features/groups/providers/group_provider.dart';
 import 'create_group_screen.dart';
 import 'group_detail_screen.dart';
 import '../../../core/constants/app_colors.dart';
@@ -9,6 +10,8 @@ class GroupsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final groups = context.watch<GroupProvider>().groups;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Grupos')),
       body: ListView(
@@ -28,7 +31,7 @@ class GroupsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 22),
 
-          ...mockGroups.map((group) {
+          ...groups.map((group) {
             final total = group.expenses.fold<double>(
               0,
               (sum, expense) => sum + expense.amount,

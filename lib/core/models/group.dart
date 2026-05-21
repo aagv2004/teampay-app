@@ -20,4 +20,24 @@ class Group {
     required this.debts,
     required this.createdAt,
   });
+
+  Group copyWith({
+    String? id,
+    String? name,
+    String? ownerMemberId,
+    List<Member>? members,
+    List<Expense>? expenses,
+    List<Debt>? debts,
+    DateTime? createdAt,
+  }) {
+    return Group(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      ownerMemberId: ownerMemberId ?? this.ownerMemberId,
+      members: members ?? this.members,
+      expenses: expenses ?? this.expenses,
+      debts: debts ?? this.debts,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
 }
