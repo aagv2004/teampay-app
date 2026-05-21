@@ -10,7 +10,9 @@ class ExpensesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final groups = context.watch<GroupProvider>().groups;
-    final expenses = groups.expand((group) => group.expenses).toList();
+    final groupsWithExpenses = groups
+        .where((group) => group.expenses.isNotEmpty)
+        .toList();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Gastos')),
@@ -18,12 +20,12 @@ class ExpensesScreen extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         children: [
           const Text(
-            'Gastos',
+            'Gastos por grupo',
             style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 6),
           const Text(
-            'Revisa todos los gastos registrados en tus grupos.',
+            'Revisa los gastos registrados organizados según cada grupo.',
             style: TextStyle(
               color: AppColors.textSecondary,
               fontWeight: FontWeight.w600,
@@ -31,41 +33,59 @@ class ExpensesScreen extends StatelessWidget {
           ),
           const SizedBox(height: 22),
 
-          if (expenses.isEmpty)
+          if (groupsWithExpenses.isEmpty)
             const Card(
               child: Padding(
-                padding: EdgeInsets.all(20),
+                padding: EdgeInsets.all(22),
                 child: Text('Aún no hay gastos registrados.'),
               ),
             ),
 
-          ...groups.expand((group) {
-            return group.expenses.map((expense) {
-              final payer = group.members.firstWhere(
-                (member) => member.id == expense.paidByMemberId,
-              );
+          ...groupsWithExpenses.map((group) {
+            final total = group.expenses.fold<double>(
+              0,
+              (sum, expense) => sum + expense.amount,
+            );
 
-              return Card(
-                child: ListTile(
+            return Card(
+              clipBehavior: Clip.antiAlias,
+              child: Theme(
+                data: Theme.of(
+                  context,
+                ).copyWith(dividerColor: Colors.transparent),
+                child: ExpansionTile(
                   leading: const CircleAvatar(
                     backgroundColor: AppColors.primary,
-                    child: Icon(
-                      Icons.receipt_long_rounded,
-                      color: Colors.white,
-                    ),
+                    child: Icon(Icons.groups_rounded, color: Colors.white),
                   ),
                   title: Text(
-                    expense.title,
-                    style: const TextStyle(fontWeight: FontWeight.w800),
-                  ),
-                  subtitle: Text('${group.name} · Pagó ${payer.name}'),
-                  trailing: Text(
-                    '\$${expense.amount.toStringAsFixed(0)}',
+                    group.name,
                     style: const TextStyle(fontWeight: FontWeight.w900),
                   ),
+                  subtitle: Text(
+                    '${group.expenses.length} gastos · Total \$${total.toStringAsFixed(0)}',
+                  ),
+                  children: group.expenses.map((expense) {
+                    final payer = group.members.firstWhere(
+                      (member) => member.id == expense.paidByMemberId,
+                    );
+
+                    return ListTile(
+                      leading: const Icon(Icons.receipt_long_rounded),
+                      title: Text(
+                        expense.title,
+                        style: const TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                      subtitle: Text('Pagó ${payer.name}'),
+                      trailing: Text(
+                        '\$${expense.amount.toStringAsFixed(0)}',
+                        style: const TextStyle(fontWeight: FontWeight.w900),
+                      ),
+                    );
+                  }).toList(),
                 ),
-              );
-            });
+              ),
+            );
           }),
         ],
       ),
