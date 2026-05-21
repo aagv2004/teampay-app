@@ -1,0 +1,284 @@
+import 'package:flutter/material.dart';
+import '../../../core/constants/app_colors.dart';
+
+class ProfileScreen extends StatelessWidget {
+  const ProfileScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Perfil')),
+      body: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          const _ProfileHeader(),
+          const SizedBox(height: 22),
+          const _ProfileBentoStats(),
+          const SizedBox(height: 24),
+          const _SettingsTile(
+            icon: Icons.person_rounded,
+            title: 'Datos personales',
+            subtitle: 'Nombre, correo y avatar',
+          ),
+          const _SettingsTile(
+            icon: Icons.notifications_rounded,
+            title: 'Notificaciones',
+            subtitle: 'Recordatorios de pagos pendientes',
+          ),
+          const _SettingsTile(
+            icon: Icons.lock_rounded,
+            title: 'Privacidad',
+            subtitle: 'Seguridad de tu cuenta',
+          ),
+          const _SettingsTile(
+            icon: Icons.help_rounded,
+            title: 'Ayuda',
+            subtitle: 'Preguntas frecuentes y soporte',
+          ),
+
+          const SizedBox(height: 24),
+
+          SizedBox(
+            height: 54,
+            child: OutlinedButton.icon(
+              onPressed: () {},
+              icon: const Icon(Icons.logout_rounded),
+              label: const Text(
+                'Cerrar sesión',
+                style: TextStyle(fontWeight: FontWeight.w800),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProfileHeader extends StatelessWidget {
+  const _ProfileHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(22),
+        child: Column(
+          children: const [
+            CircleAvatar(
+              radius: 42,
+              backgroundColor: AppColors.primary,
+              child: Icon(Icons.person_rounded, color: Colors.white, size: 42),
+            ),
+            SizedBox(height: 14),
+            Text(
+              'Alejandro González',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+            ),
+            SizedBox(height: 4),
+            Text(
+              'alejandro@email.com',
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SettingsTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+
+  const _SettingsTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Card(
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: isDark
+              ? AppColors.darkSurfaceVariant
+              : AppColors.lightSurfaceVariant,
+          child: Icon(icon, color: AppColors.primary),
+        ),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
+        subtitle: Text(subtitle),
+        trailing: const Icon(Icons.chevron_right_rounded),
+        onTap: () {},
+      ),
+    );
+  }
+}
+
+class _ProfileBentoStats extends StatelessWidget {
+  const _ProfileBentoStats();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: const [
+        Row(
+          children: [
+            Expanded(
+              child: _SmallBentoCard(
+                icon: Icons.groups_rounded,
+                title: 'Grupos',
+                value: '3',
+                subtitle: 'Activos',
+              ),
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: _SmallBentoCard(
+                icon: Icons.receipt_long_rounded,
+                title: 'Gastos',
+                value: '12',
+                subtitle: 'Registrados',
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 12),
+        _WideBentoCard(
+          icon: Icons.account_balance_wallet_rounded,
+          title: 'Balance pendiente',
+          value: '\$22.500',
+          subtitle: 'Saldo general considerando todos tus grupos',
+        ),
+      ],
+    );
+  }
+}
+
+class _SmallBentoCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String value;
+  final String subtitle;
+
+  const _SmallBentoCard({
+    required this.icon,
+    required this.title,
+    required this.value,
+    required this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: SizedBox(
+          height: 128,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircleAvatar(
+                radius: 22,
+                backgroundColor: isDark
+                    ? AppColors.darkSurfaceVariant
+                    : AppColors.lightSurfaceVariant,
+                child: Icon(icon, color: AppColors.primary),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _WideBentoCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String value;
+  final String subtitle;
+
+  const _WideBentoCard({
+    required this.icon,
+    required this.title,
+    required this.value,
+    required this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 28,
+              backgroundColor: AppColors.warning.withValues(alpha: 0.14),
+              child: Icon(icon, color: Colors.white),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
