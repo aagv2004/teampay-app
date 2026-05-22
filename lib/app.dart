@@ -5,7 +5,7 @@ import 'core/theme/app_theme.dart';
 import 'core/theme/theme_provider.dart';
 import 'core/theme/dark_theme.dart';
 
-import 'features/home/screens/main_navigation_screen.dart';
+import 'features/auth/widgets/auth_gate.dart';
 
 class TeamPayApp extends StatelessWidget {
   const TeamPayApp({super.key});
@@ -20,7 +20,7 @@ class TeamPayApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       darkTheme: DarkAppTheme.darkTheme,
       themeMode: themeProvider.themeMode,
-      home: const MainNavigationScreen(),
+      home: const AuthGate(),
     );
   }
 }
