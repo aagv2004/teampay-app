@@ -16,27 +16,6 @@ class ProfileScreen extends StatelessWidget {
           const SizedBox(height: 22),
           const _ProfileBentoStats(),
           const SizedBox(height: 24),
-          const _SettingsTile(
-            icon: Icons.person_rounded,
-            title: 'Datos personales',
-            subtitle: 'Nombre, correo y avatar',
-          ),
-          const _SettingsTile(
-            icon: Icons.notifications_rounded,
-            title: 'Notificaciones',
-            subtitle: 'Recordatorios de pagos pendientes',
-          ),
-          const _SettingsTile(
-            icon: Icons.lock_rounded,
-            title: 'Privacidad',
-            subtitle: 'Seguridad de tu cuenta',
-          ),
-          const _SettingsTile(
-            icon: Icons.help_rounded,
-            title: 'Ayuda',
-            subtitle: 'Preguntas frecuentes y soporte',
-          ),
-
           const SizedBox(height: 24),
 
           SizedBox(
@@ -48,7 +27,7 @@ class ProfileScreen extends StatelessWidget {
                   builder: (context) {
                     return AlertDialog(
                       title: const Text('Cerrar Sesión'),
-                      content: const Text('¿Seguro que quieres cerrar sesión'),
+                      content: const Text('¿Seguro que quieres cerrar sesión?'),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(context, false),
@@ -85,11 +64,16 @@ class _ProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
+    final name = user?.displayName ?? 'Usuario TeamPay';
+    final email = user?.email ?? 'Sin correo';
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(22),
         child: Column(
-          children: const [
+          children: [
             CircleAvatar(
               radius: 42,
               backgroundColor: AppColors.primary,
@@ -97,12 +81,12 @@ class _ProfileHeader extends StatelessWidget {
             ),
             SizedBox(height: 14),
             Text(
-              'Alejandro González',
+              name,
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
             ),
             SizedBox(height: 4),
             Text(
-              'alejandro@email.com',
+              email,
               style: TextStyle(
                 color: AppColors.textSecondary,
                 fontWeight: FontWeight.w600,
@@ -110,38 +94,6 @@ class _ProfileHeader extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _SettingsTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-
-  const _SettingsTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Card(
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: isDark
-              ? AppColors.darkSurfaceVariant
-              : AppColors.lightSurfaceVariant,
-          child: Icon(icon, color: AppColors.primary),
-        ),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
-        subtitle: Text(subtitle),
-        trailing: const Icon(Icons.chevron_right_rounded),
-        onTap: () {},
       ),
     );
   }

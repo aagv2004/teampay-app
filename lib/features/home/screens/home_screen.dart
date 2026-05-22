@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -11,6 +12,9 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    final name = user?.displayName ?? 'Usuario';
+
     final themeProvider = context.watch<ThemeProvider>();
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -57,21 +61,13 @@ class HomeScreen extends StatelessWidget {
               isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
             ),
           ),
-          const Padding(
-            padding: EdgeInsets.only(right: 16),
-            child: CircleAvatar(
-              radius: 15,
-              backgroundColor: AppColors.primary,
-              child: Icon(Icons.person, color: Colors.white, size: 18),
-            ),
-          ),
         ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          const Text(
-            'Hola, Alejandro',
+          Text(
+            'Hola, $name',
             style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 6),
