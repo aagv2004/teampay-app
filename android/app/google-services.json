@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "466828508888",
+    "project_id": "teampay-be770",
+    "storage_bucket": "teampay-be770.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:466828508888:android:d702abbc94aab2c1bd61ad",
+        "android_client_info": {
+          "package_name": "com.example.teampayapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA8K04CCdsxh8r1PZMMgKWgUK_KjiWpzbE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

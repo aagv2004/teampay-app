@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 
@@ -41,7 +42,31 @@ class ProfileScreen extends StatelessWidget {
           SizedBox(
             height: 54,
             child: OutlinedButton.icon(
-              onPressed: () {},
+              onPressed: () async {
+                final shouldLogout = await showDialog<bool>(
+                  context: context,
+                  builder: (context) {
+                    return AlertDialog(
+                      title: const Text('Cerrar Sesión'),
+                      content: const Text('¿Seguro que quieres cerrar sesión'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const Text('Cancelar'),
+                        ),
+                        FilledButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: const Text('Cerrar sesión'),
+                        ),
+                      ],
+                    );
+                  },
+                );
+
+                if (shouldLogout == true) {
+                  await FirebaseAuth.instance.signOut();
+                }
+              },
               icon: const Icon(Icons.logout_rounded),
               label: const Text(
                 'Cerrar sesión',
