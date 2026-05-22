@@ -16,7 +16,6 @@ class ProfileScreen extends StatelessWidget {
           const SizedBox(height: 22),
           const _ProfileBentoStats(),
           const SizedBox(height: 24),
-          const SizedBox(height: 24),
 
           SizedBox(
             height: 54,

@@ -44,6 +44,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     if (name.length < 3) {
       showMessage('El nombre no puede tener menos de 3 caracteres.');
+      return;
     }
 
     if (password.length < 6) {

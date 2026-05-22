@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/theme_provider.dart';
-import '../../../core/mock/mock_data.dart';
+import '../../groups/providers/group_provider.dart';
 import '../../../core/constants/app_colors.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -16,11 +16,12 @@ class HomeScreen extends StatelessWidget {
     final name = user?.displayName ?? 'Usuario';
 
     final themeProvider = context.watch<ThemeProvider>();
+    final groups = context.watch<GroupProvider>().groups;
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final allExpenses = mockGroups.expand((group) => group.expenses).toList();
-    final allDebts = mockGroups.expand((group) => group.debts).toList();
+    final allExpenses = groups.expand((group) => group.expenses).toList();
+    final allDebts = groups.expand((group) => group.debts).toList();
 
     final totalSpent = allExpenses.fold<double>(
       0,
@@ -31,10 +32,10 @@ class HomeScreen extends StatelessWidget {
         .where((debt) => !debt.isPaid)
         .fold<double>(0, (sum, debt) => sum + debt.remainingAmount);
 
-    final groupWithMostMembers = [...mockGroups]
+    final groupWithMostMembers = [...groups]
       ..sort((a, b) => b.members.length.compareTo(a.members.length));
 
-    final groupWithMostPending = [...mockGroups]
+    final groupWithMostPending = [...groups]
       ..sort((a, b) {
         final pendingA = a.debts
             .where((debt) => !debt.isPaid)
@@ -68,7 +69,7 @@ class HomeScreen extends StatelessWidget {
         children: [
           Text(
             'Hola, $name',
-            style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
+            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 6),
           const Text(
@@ -80,7 +81,11 @@ class HomeScreen extends StatelessWidget {
           ),
           const SizedBox(height: 22),
 
-          _BalanceCard(totalSpent: totalSpent, totalPending: totalPending),
+          _BalanceCard(
+            totalSpent: totalSpent,
+            totalPending: totalPending,
+            groupsCount: groups.length,
+          ),
 
           const SizedBox(height: 18),
 
@@ -90,9 +95,12 @@ class HomeScreen extends StatelessWidget {
                 child: _InsightCard(
                   icon: Icons.groups_rounded,
                   title: 'Más integrantes',
-                  value: groupWithMostMembers.first.name,
-                  subtitle:
-                      '${groupWithMostMembers.first.members.length} integrantes',
+                  value: groupWithMostMembers.isEmpty
+                      ? 'Sin grupos'
+                      : groupWithMostMembers.first.name,
+                  subtitle: groupWithMostMembers.isEmpty
+                      ? 'Crea tu primer grupo'
+                      : '${groupWithMostMembers.first.members.length} integrantes',
                 ),
               ),
               const SizedBox(width: 12),
@@ -100,8 +108,12 @@ class HomeScreen extends StatelessWidget {
                 child: _InsightCard(
                   icon: Icons.warning_amber_rounded,
                   title: 'Mayor pendiente',
-                  value: groupWithMostPending.first.name,
-                  subtitle: 'Revisar deudas',
+                  value: groupWithMostPending.isEmpty
+                      ? 'Sin pendientes'
+                      : groupWithMostPending.first.name,
+                  subtitle: groupWithMostPending.isEmpty
+                      ? 'Todo limpio por ahora 🦖'
+                      : 'Revisar deudas',
                   highlighted: true,
                 ),
               ),
@@ -135,8 +147,13 @@ class HomeScreen extends StatelessWidget {
 class _BalanceCard extends StatelessWidget {
   final double totalSpent;
   final double totalPending;
+  final int groupsCount;
 
-  const _BalanceCard({required this.totalSpent, required this.totalPending});
+  const _BalanceCard({
+    required this.totalSpent,
+    required this.totalPending,
+    required this.groupsCount,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -183,7 +200,7 @@ class _BalanceCard extends StatelessWidget {
                 Expanded(
                   child: _BalanceMiniBox(
                     title: 'Grupos',
-                    value: '${mockGroups.length}',
+                    value: '$groupsCount',
                   ),
                 ),
               ],

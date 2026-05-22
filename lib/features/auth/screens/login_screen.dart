@@ -67,7 +67,7 @@ class _LoginScreenState extends State<LoginScreen> {
       case 'user-disabled':
         return 'Esta cuenta fue deshabilitada.';
       case 'user-not-found':
-        return 'No existe una cuenta con este corre';
+        return 'No existe una cuenta con este correo.';
       case 'wrong-password':
         return 'La contraseña es incorrecta';
       case 'invalid-credential':
@@ -122,7 +122,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     controller: passwordController,
                     obscureText: obscurePassword,
                     decoration: InputDecoration(
-                      labelText: 'COntaseña',
+                      labelText: 'Contraseña',
                       prefixIcon: const Icon(Icons.lock_outline),
                       border: const OutlineInputBorder(),
                       suffixIcon: IconButton(
