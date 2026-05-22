@@ -1,15 +1,70 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
-import '../../../core/mock/mock_data.dart';
+import '../../../core/models/debt.dart';
+import '../../../core/models/expense.dart';
 import '../../../core/models/group.dart';
 import '../../../core/models/member.dart';
-import '../../../core/models/expense.dart';
-import '../../../core/models/debt.dart';
+import '../services/group_firestore_service.dart';
 
 class GroupProvider extends ChangeNotifier {
-  final List<Group> _groups = List.from(mockGroups);
+  GroupProvider({GroupFirestoreService? service})
+    : _service = service ?? GroupFirestoreService();
 
-  List<Group> get groups => _groups;
+  final GroupFirestoreService _service;
+
+  final List<Group> _groups = [];
+  StreamSubscription<List<Group>>? _groupsSubscription;
+
+  String? _currentUserId;
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  List<Group> get groups => List.unmodifiable(_groups);
+  bool get isLoading => _isLoading;
+  String? get errorMessage => _errorMessage;
+
+  void bindUser(String userId) {
+    if (_currentUserId == userId) return;
+
+    _currentUserId = userId;
+    _isLoading = true;
+    _errorMessage = null;
+    _groups.clear();
+    notifyListeners();
+
+    _groupsSubscription?.cancel();
+
+    _groupsSubscription = _service
+        .watchUserGroups(userId)
+        .listen(
+          (groups) {
+            _groups
+              ..clear()
+              ..addAll(groups);
+
+            _isLoading = false;
+            _errorMessage = null;
+            notifyListeners();
+          },
+          onError: (error) {
+            _isLoading = false;
+            _errorMessage = 'No se pudieron cargar los grupos.';
+            notifyListeners();
+          },
+        );
+  }
+
+  void clearUser() {
+    _currentUserId = null;
+    _groupsSubscription?.cancel();
+    _groupsSubscription = null;
+    _groups.clear();
+    _isLoading = false;
+    _errorMessage = null;
+    notifyListeners();
+  }
 
   Group? getGroupById(String groupId) {
     try {
@@ -19,20 +74,26 @@ class GroupProvider extends ChangeNotifier {
     }
   }
 
-  void createGroup({
+  Future<void> createGroup({
     required String name,
     required List<String> memberNames,
     required int ownerIndex,
-  }) {
+  }) async {
+    final userId = _currentUserId;
+    if (userId == null) return;
+
     final members = memberNames
         .where((name) => name.trim().isNotEmpty)
         .map(
           (name) => Member(
-            id: DateTime.now().microsecondsSinceEpoch.toString() + name,
+            id: '${DateTime.now().microsecondsSinceEpoch}-${name.trim()}',
             name: name.trim(),
           ),
         )
         .toList();
+
+    if (members.isEmpty) return;
+    if (ownerIndex < 0 || ownerIndex >= members.length) return;
 
     final group = Group(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -44,51 +105,52 @@ class GroupProvider extends ChangeNotifier {
       createdAt: DateTime.now(),
     );
 
-    _groups.add(group);
-    notifyListeners();
+    await _service.createGroup(userId: userId, group: group);
   }
 
-  void editGroup({
+  Future<void> editGroup({
     required String groupId,
     required String name,
     required List<Member> members,
     required String ownerMemberId,
-  }) {
-    final index = _groups.indexWhere((group) => group.id == groupId);
+  }) async {
+    final userId = _currentUserId;
+    if (userId == null) return;
 
+    final index = _groups.indexWhere((group) => group.id == groupId);
     if (index == -1) return;
 
     final currentGroup = _groups[index];
 
-    _groups[index] = currentGroup.copyWith(
+    final updatedGroup = currentGroup.copyWith(
       name: name.trim(),
       members: members,
       ownerMemberId: ownerMemberId,
     );
 
-    notifyListeners();
+    await _service.updateGroup(userId: userId, group: updatedGroup);
   }
 
-  void deleteGroup(String groupId) {
-    _groups.removeWhere((group) => group.id == groupId);
-    notifyListeners();
+  Future<void> deleteGroup(String groupId) async {
+    await _service.deleteGroup(groupId);
   }
 
-  void addExpense({
+  Future<void> addExpense({
     required String groupId,
     required String title,
     required double amount,
     required String paidByMemberId,
     required List<String> splitBetweenMemberIds,
-  }) {
-    final groupIndex = _groups.indexWhere((group) => group.id == groupId);
+  }) async {
+    final userId = _currentUserId;
+    if (userId == null) return;
 
+    final groupIndex = _groups.indexWhere((group) => group.id == groupId);
     if (groupIndex == -1) return;
     if (splitBetweenMemberIds.isEmpty) return;
     if (amount <= 0) return;
 
     final group = _groups[groupIndex];
-
     final expenseId = DateTime.now().microsecondsSinceEpoch.toString();
 
     final expense = Expense(
@@ -139,22 +201,24 @@ class GroupProvider extends ChangeNotifier {
       }
     }
 
-    _groups[groupIndex] = group.copyWith(
+    final updatedGroup = group.copyWith(
       expenses: [...group.expenses, expense],
       debts: updatedDebts,
     );
 
-    notifyListeners();
+    await _service.updateGroup(userId: userId, group: updatedGroup);
   }
 
-  void registerDebtPayment({
+  Future<void> registerDebtPayment({
     required String groupId,
     required String debtId,
     required double paymentAmount,
     required PaymentMethod paymentMethod,
-  }) {
-    final groupIndex = _groups.indexWhere((group) => group.id == groupId);
+  }) async {
+    final userId = _currentUserId;
+    if (userId == null) return;
 
+    final groupIndex = _groups.indexWhere((group) => group.id == groupId);
     if (groupIndex == -1) return;
     if (paymentAmount <= 0) return;
 
@@ -171,8 +235,14 @@ class GroupProvider extends ChangeNotifier {
       );
     }).toList();
 
-    _groups[groupIndex] = group.copyWith(debts: updatedDebts);
+    final updatedGroup = group.copyWith(debts: updatedDebts);
 
-    notifyListeners();
+    await _service.updateGroup(userId: userId, group: updatedGroup);
+  }
+
+  @override
+  void dispose() {
+    _groupsSubscription?.cancel();
+    super.dispose();
   }
 }

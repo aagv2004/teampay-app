@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'member.dart';
 import 'expense.dart';
 import 'debt.dart';
@@ -38,6 +40,39 @@ class Group {
       expenses: expenses ?? this.expenses,
       debts: debts ?? this.debts,
       createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  Map<String, dynamic> toMap({required String userId}) {
+    return {
+      'id': id,
+      'name': name,
+      'ownerMemberId': ownerMemberId,
+      'members': members.map((member) => member.toMap()).toList(),
+      'expenses': expenses.map((expense) => expense.toMap()).toList(),
+      'debts': debts.map((debt) => debt.toMap()).toList(),
+      'createdAt': Timestamp.fromDate(createdAt),
+      'userId': userId,
+    };
+  }
+
+  factory Group.fromMap(Map<String, dynamic> map) {
+    return Group(
+      id: map['id'] ?? '',
+      name: map['name'] ?? '',
+      ownerMemberId: map['ownerMemberId'] ?? '',
+      members: (map['members'] as List<dynamic>? ?? [])
+          .map((member) => Member.fromMap(Map<String, dynamic>.from(member)))
+          .toList(),
+      expenses: (map['expenses'] as List<dynamic>? ?? [])
+          .map((expense) => Expense.fromMap(Map<String, dynamic>.from(expense)))
+          .toList(),
+      debts: (map['debts'] as List<dynamic>? ?? [])
+          .map((debt) => Debt.fromMap(Map<String, dynamic>.from(debt)))
+          .toList(),
+      createdAt: map['createdAt'] is Timestamp
+          ? (map['createdAt'] as Timestamp).toDate()
+          : DateTime.now(),
     );
   }
 }

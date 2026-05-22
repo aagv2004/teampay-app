@@ -43,6 +43,37 @@ class Debt {
     );
   }
 
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'expenseId': expenseId,
+      'groupId': groupId,
+      'fromMemberId': fromMemberId,
+      'toMemberId': toMemberId,
+      'amount': amount,
+      'paidAmount': paidAmount,
+      'paymentMethod': paymentMethod?.name,
+    };
+  }
+
+  factory Debt.fromMap(Map<String, dynamic> map) {
+    return Debt(
+      id: map['id'] ?? '',
+      expenseId: map['expenseId'] ?? '',
+      groupId: map['groupId'] ?? '',
+      fromMemberId: map['fromMemberId'] ?? '',
+      toMemberId: map['toMemberId'] ?? '',
+      amount: (map['amount'] ?? 0).toDouble(),
+      paidAmount: (map['paidAmount'] ?? 0).toDouble(),
+      paymentMethod: map['paymentMethod'] == null
+          ? null
+          : PaymentMethod.values.firstWhere(
+              (method) => method.name == map['paymentMethod'],
+              orElse: () => PaymentMethod.cash,
+            ),
+    );
+  }
+
   double get remainingAmount {
     final remaining = amount - paidAmount;
     return remaining < 0 ? 0 : remaining;
