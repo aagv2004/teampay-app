@@ -23,9 +23,8 @@ class GroupDetailScreen extends StatelessWidget {
       );
     }
 
-    final owner = group.members.firstWhere(
-      (member) => member.id == group.ownerMemberId,
-    );
+    final owner = _findMemberById(group.members, group.ownerMemberId);
+    final ownerName = owner?.name ?? 'integrante eliminado';
 
     final total = group.expenses.fold<double>(
       0,
@@ -65,7 +64,7 @@ class GroupDetailScreen extends StatelessWidget {
             groupName: group.name,
             total: '\$${total.toStringAsFixed(0)}',
             members:
-                '${group.members.length} integrantes · Administrado por ${owner.name}',
+                '${group.members.length} integrantes · Administrado por $ownerName',
             pending: '\$${pending.toStringAsFixed(0)}',
           ),
 
@@ -91,20 +90,21 @@ class GroupDetailScreen extends StatelessWidget {
             )
           else
             ...group.debts.map((debt) {
-              final fromMember = group.members.firstWhere(
-                (member) => member.id == debt.fromMemberId,
+              final fromMember = _findMemberById(
+                group.members,
+                debt.fromMemberId,
               );
+              final toMember = _findMemberById(group.members, debt.toMemberId);
 
-              final toMember = group.members.firstWhere(
-                (member) => member.id == debt.toMemberId,
-              );
+              final fromMemberName = fromMember?.name ?? 'Integrante eliminado';
+              final toMemberName = toMember?.name ?? 'Inegrante eliminado';
 
               return _DebtTile(
-                name: fromMember.name,
+                name: fromMemberName,
                 status: debt.statusLabel,
                 amount: '\$${debt.remainingAmount.toStringAsFixed(0)}',
                 detail:
-                    'Debe a ${toMember.name} · Pagado: \$${debt.paidAmount.toStringAsFixed(0)} · ${debt.paymentMethodLabel}',
+                    'Debe a $toMemberName · Pagado: \$${debt.paidAmount.toStringAsFixed(0)} · ${debt.paymentMethodLabel}',
                 isPaid: debt.isPaid,
                 isPartial: debt.isPartiallyPaid,
                 action: !debt.isPaid
@@ -133,13 +133,15 @@ class GroupDetailScreen extends StatelessWidget {
             )
           else
             ...group.expenses.map((expense) {
-              final payer = group.members.firstWhere(
-                (member) => member.id == expense.paidByMemberId,
+              final payer = _findMemberById(
+                group.members,
+                expense.paidByMemberId,
               );
+              final payerName = payer?.name ?? 'Integrante eliminado';
 
               return _ExpenseTile(
                 title: expense.title,
-                subtitle: '${payer.name} pagó todo',
+                subtitle: '$payerName pagó todo',
                 amount: '\$${expense.amount.toStringAsFixed(0)}',
               );
             }),
@@ -623,4 +625,12 @@ void _showRegisterPaymentSheet({
       );
     },
   );
+}
+
+Member? _findMemberById(List<Member> members, String memberId) {
+  for (final member in members) {
+    return member;
+  }
+
+  return null;
 }

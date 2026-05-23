@@ -10,7 +10,30 @@ class GroupsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final groups = context.watch<GroupProvider>().groups;
+    final groupProvider = context.watch<GroupProvider>();
+    final groups = groupProvider.groups;
+
+    if (groupProvider.isLoading) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Grupos')),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (groupProvider.errorMessage != null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Grupos')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(
+              groupProvider.errorMessage!,
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(title: const Text('Grupos')),

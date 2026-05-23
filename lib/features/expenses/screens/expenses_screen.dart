@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:teampayapp/core/models/member.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../groups/providers/group_provider.dart';
@@ -9,7 +10,31 @@ class ExpensesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final groups = context.watch<GroupProvider>().groups;
+    final groupProvider = context.watch<GroupProvider>();
+    final groups = groupProvider.groups;
+
+    if (groupProvider.isLoading) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Gastos')),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (groupProvider.errorMessage != null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Gastos')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(
+              groupProvider.errorMessage!,
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      );
+    }
+
     final groupsWithExpenses = groups
         .where((group) => group.expenses.isNotEmpty)
         .toList();
@@ -66,9 +91,12 @@ class ExpensesScreen extends StatelessWidget {
                     '${group.expenses.length} gastos · Total \$${total.toStringAsFixed(0)}',
                   ),
                   children: group.expenses.map((expense) {
-                    final payer = group.members.firstWhere(
-                      (member) => member.id == expense.paidByMemberId,
+                    final payer = _findMemberById(
+                      group.members,
+                      expense.paidByMemberId,
                     );
+
+                    final payerName = payer?.name ?? 'Integrante eliminado';
 
                     return ListTile(
                       leading: const Icon(Icons.receipt_long_rounded),
@@ -76,7 +104,7 @@ class ExpensesScreen extends StatelessWidget {
                         expense.title,
                         style: const TextStyle(fontWeight: FontWeight.w800),
                       ),
-                      subtitle: Text('Pagó ${payer.name}'),
+                      subtitle: Text('Pagó $payerName'),
                       trailing: Text(
                         '\$${expense.amount.toStringAsFixed(0)}',
                         style: const TextStyle(fontWeight: FontWeight.w900),
@@ -91,4 +119,14 @@ class ExpensesScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+Member? _findMemberById(List<Member> members, String memberId) {
+  for (final member in members) {
+    if (member.id == memberId) {
+      return member;
+    }
+  }
+
+  return null;
 }

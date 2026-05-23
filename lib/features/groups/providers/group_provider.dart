@@ -50,7 +50,7 @@ class GroupProvider extends ChangeNotifier {
           },
           onError: (error) {
             _isLoading = false;
-            _errorMessage = 'No se pudieron cargar los grupos.';
+            _errorMessage = 'No se pudieron cargar los grupos:';
             notifyListeners();
           },
         );
