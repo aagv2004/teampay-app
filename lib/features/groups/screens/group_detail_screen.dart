@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:teampayapp/core/models/debt.dart';
 import 'package:teampayapp/core/models/member.dart';
+import 'package:teampayapp/core/utils/currency_formatter.dart';
 import 'package:teampayapp/features/groups/providers/group_provider.dart';
 import '../../../core/constants/app_colors.dart';
 import 'edit_group_screen.dart';
@@ -62,10 +63,10 @@ class GroupDetailScreen extends StatelessWidget {
         children: [
           _GroupHeaderCard(
             groupName: group.name,
-            total: '\$${total.toStringAsFixed(0)}',
+            total: CurrencyFormatter.clp(total),
             members:
                 '${group.members.length} integrantes · Administrado por $ownerName',
-            pending: '\$${pending.toStringAsFixed(0)}',
+            pending: CurrencyFormatter.clp(pending),
           ),
 
           const SizedBox(height: 18),
@@ -102,9 +103,9 @@ class GroupDetailScreen extends StatelessWidget {
               return _DebtTile(
                 name: fromMemberName,
                 status: debt.statusLabel,
-                amount: '\$${debt.remainingAmount.toStringAsFixed(0)}',
+                amount: '${CurrencyFormatter.clp(debt.remainingAmount)}',
                 detail:
-                    'Debe a $toMemberName · Pagado: \$${debt.paidAmount.toStringAsFixed(0)} · ${debt.paymentMethodLabel}',
+                    'Debe a $toMemberName · Pagado: ${CurrencyFormatter.clp(debt.paidAmount)} · ${debt.paymentMethodLabel}',
                 isPaid: debt.isPaid,
                 isPartial: debt.isPartiallyPaid,
                 action: !debt.isPaid
@@ -142,7 +143,7 @@ class GroupDetailScreen extends StatelessWidget {
               return _ExpenseTile(
                 title: expense.title,
                 subtitle: '$payerName pagó todo',
-                amount: '\$${expense.amount.toStringAsFixed(0)}',
+                amount: '${CurrencyFormatter.clp(expense.amount)}',
               );
             }),
         ],
@@ -311,6 +312,7 @@ class _DebtTile extends StatelessWidget {
               ),
               subtitle: Text(detail),
               trailing: Column(
+                mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -525,7 +527,7 @@ void _showRegisterPaymentSheet({
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Pendiente: \$${debt.remainingAmount.toStringAsFixed(0)}',
+                  'Pendiente: ${CurrencyFormatter.clp(debt.remainingAmount)}',
                   style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontWeight: FontWeight.w600,
@@ -629,7 +631,9 @@ void _showRegisterPaymentSheet({
 
 Member? _findMemberById(List<Member> members, String memberId) {
   for (final member in members) {
-    return member;
+    if (member.id == memberId) {
+      return member;
+    }
   }
 
   return null;

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:teampayapp/core/models/member.dart';
+import 'package:teampayapp/core/utils/currency_formatter.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../groups/providers/group_provider.dart';
@@ -88,7 +89,7 @@ class ExpensesScreen extends StatelessWidget {
                     style: const TextStyle(fontWeight: FontWeight.w900),
                   ),
                   subtitle: Text(
-                    '${group.expenses.length} gastos · Total \$${total.toStringAsFixed(0)}',
+                    '${group.expenses.length} gastos · Total ${CurrencyFormatter.clp(total)}',
                   ),
                   children: group.expenses.map((expense) {
                     final payer = _findMemberById(
@@ -106,7 +107,7 @@ class ExpensesScreen extends StatelessWidget {
                       ),
                       subtitle: Text('Pagó $payerName'),
                       trailing: Text(
-                        '\$${expense.amount.toStringAsFixed(0)}',
+                        CurrencyFormatter.clp(expense.amount),
                         style: const TextStyle(fontWeight: FontWeight.w900),
                       ),
                     );

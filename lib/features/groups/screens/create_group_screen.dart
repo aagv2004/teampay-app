@@ -15,7 +15,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
   final _groupNameController = TextEditingController();
   final _memberNameController = TextEditingController();
 
-  final List<String> _members = ['Alejandro'];
+  final List<String> _members = [];
   int _ownerIndex = 0;
 
   @override
@@ -137,6 +137,15 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
           ),
 
           const SizedBox(height: 10),
+
+          if (_members.isEmpty)
+            const Padding(
+              padding: EdgeInsets.only(bottom: 6),
+              child: Text(
+                'Todavía no agregas integrantes.',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
+            ),
 
           ..._members.asMap().entries.map((entry) {
             final index = entry.key;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:teampayapp/core/utils/currency_formatter.dart';
 import 'package:teampayapp/features/groups/providers/group_provider.dart';
 import 'create_group_screen.dart';
 import 'group_detail_screen.dart';
@@ -164,14 +165,14 @@ class _GroupListCard extends StatelessWidget {
                   Expanded(
                     child: _MiniInfoBox(
                       title: 'Total',
-                      value: '\$${total.toStringAsFixed(0)}',
+                      value: '${CurrencyFormatter.clp(total)}',
                     ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: _MiniInfoBox(
                       title: 'Pendiente',
-                      value: '\$${pending.toStringAsFixed(0)}',
+                      value: '${CurrencyFormatter.clp(pending)}',
                       highlight: hasPending,
                     ),
                   ),

@@ -2,6 +2,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:teampayapp/core/utils/currency_formatter.dart';
+import 'package:teampayapp/features/groups/screens/group_detail_screen.dart';
 
 import '../../../core/theme/theme_provider.dart';
 import '../../groups/providers/group_provider.dart';
@@ -35,18 +37,24 @@ class HomeScreen extends StatelessWidget {
     final groupWithMostMembers = [...groups]
       ..sort((a, b) => b.members.length.compareTo(a.members.length));
 
-    final groupWithMostPending = [...groups]
-      ..sort((a, b) {
-        final pendingA = a.debts
-            .where((debt) => !debt.isPaid)
-            .fold<double>(0, (sum, debt) => sum + debt.remainingAmount);
+    final groupWithMostPending =
+        groups.where((group) {
+          final pending = group.debts
+              .where((debt) => !debt.isPaid)
+              .fold<double>(0, (sum, debt) => sum + debt.remainingAmount);
 
-        final pendingB = b.debts
-            .where((debt) => !debt.isPaid)
-            .fold<double>(0, (sum, debt) => sum + debt.remainingAmount);
+          return pending > 0;
+        }).toList()..sort((a, b) {
+          final pendingA = a.debts
+              .where((debt) => !debt.isPaid)
+              .fold<double>(0, (sum, debt) => sum + debt.remainingAmount);
 
-        return pendingB.compareTo(pendingA);
-      });
+          final pendingB = b.debts
+              .where((debt) => !debt.isPaid)
+              .fold<double>(0, (sum, debt) => sum + debt.remainingAmount);
+
+          return pendingB.compareTo(pendingA);
+        });
 
     return Scaffold(
       appBar: AppBar(
@@ -101,6 +109,18 @@ class HomeScreen extends StatelessWidget {
                   subtitle: groupWithMostMembers.isEmpty
                       ? 'Crea tu primer grupo'
                       : '${groupWithMostMembers.first.members.length} integrantes',
+                  onTap: groupWithMostMembers.isEmpty
+                      ? null
+                      : () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => GroupDetailScreen(
+                                groupId: groupWithMostMembers.first.id,
+                              ),
+                            ),
+                          );
+                        },
                 ),
               ),
               const SizedBox(width: 12),
@@ -115,6 +135,18 @@ class HomeScreen extends StatelessWidget {
                       ? 'Todo limpio por ahora 🦖'
                       : 'Revisar deudas',
                   highlighted: true,
+                  onTap: groupWithMostPending.isEmpty
+                      ? null
+                      : () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => GroupDetailScreen(
+                                groupId: groupWithMostPending.first.id,
+                              ),
+                            ),
+                          );
+                        },
                 ),
               ),
             ],
@@ -172,9 +204,11 @@ class _BalanceCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              '\$${totalPending.toStringAsFixed(0)}',
+              CurrencyFormatter.clp(totalPending),
               style: TextStyle(
-                color: totalPending > 0 ? AppColors.warning : AppColors.primary,
+                color: totalPending > 0
+                    ? AppColors.primary
+                    : AppColors.primaryDark,
                 fontSize: 36,
                 fontWeight: FontWeight.w900,
               ),
@@ -193,7 +227,7 @@ class _BalanceCard extends StatelessWidget {
                 Expanded(
                   child: _BalanceMiniBox(
                     title: 'Total gastado',
-                    value: '\$${totalSpent.toStringAsFixed(0)}',
+                    value: CurrencyFormatter.clp(totalSpent),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -256,6 +290,7 @@ class _InsightCard extends StatelessWidget {
   final String value;
   final String subtitle;
   final bool highlighted;
+  final VoidCallback? onTap;
 
   const _InsightCard({
     required this.icon,
@@ -263,58 +298,86 @@ class _InsightCard extends StatelessWidget {
     required this.value,
     required this.subtitle,
     this.highlighted = false,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isClickable = onTap != null;
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: SizedBox(
-          height: 145,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              CircleAvatar(
-                backgroundColor: highlighted
-                    ? AppColors.warningBackground
-                    : Theme.of(context).brightness == Brightness.dark
-                    ? AppColors.darkSurfaceVariant
-                    : AppColors.lightSurfaceVariant,
-                child: Icon(
-                  icon,
-                  color: highlighted ? AppColors.warning : AppColors.primary,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                CircleAvatar(
+                  radius: 24,
+                  backgroundColor: highlighted
+                      ? AppColors.warningBackground
+                      : Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.darkSurfaceVariant
+                      : AppColors.lightSurfaceVariant,
+                  child: Icon(
+                    icon,
+                    size: 30,
+                    color: highlighted ? AppColors.warning : AppColors.primary,
+                  ),
                 ),
-              ),
-              const Spacer(),
-              Text(
-                title,
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
+
+                const SizedBox(height: 14),
+
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                value,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 16,
+
+                const SizedBox(height: 4),
+
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 16,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
+
+                const SizedBox(height: 2),
+
+                Text(
+                  subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
-            ],
+
+                if (isClickable) ...[
+                  const SizedBox(height: 6),
+                  const Icon(
+                    Icons.touch_app_rounded,
+                    size: 15,
+                    color: AppColors.textSecondary,
+                  ),
+                ],
+              ],
+            ),
           ),
         ),
       ),
@@ -344,7 +407,7 @@ class _MovementTile extends StatelessWidget {
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
         subtitle: Text(subtitle),
         trailing: Text(
-          '\$${amount.toStringAsFixed(0)}',
+          CurrencyFormatter.clp(amount),
           style: const TextStyle(fontWeight: FontWeight.w900),
         ),
       ),
