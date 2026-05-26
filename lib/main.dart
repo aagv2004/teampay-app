@@ -7,6 +7,8 @@ import 'core/theme/theme_provider.dart';
 import 'features/groups/providers/group_provider.dart';
 import 'firebase_options.dart';
 
+/// Punto de inicio de la app.
+/// Inicializa Firebase y registra los providers globales.
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 

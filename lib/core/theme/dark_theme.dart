@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../constants/app_colors.dart';
 
+/// Tema oscuro de la app.
+/// Mantiene los mismos componentes, pero con colores para fondo oscuro.
 class DarkAppTheme {
   static ThemeData get darkTheme {
     final base = ThemeData.dark();

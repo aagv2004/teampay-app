@@ -4,6 +4,8 @@ import 'package:teampayapp/core/constants/app_colors.dart';
 
 import 'register_screen.dart';
 
+/// Pantalla para entrar con correo y contrasena.
+/// Si el login resulta, AuthGate cambia al home automaticamente.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -11,6 +13,7 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
+/// Controla los campos, carga y errores del login.
 class _LoginScreenState extends State<LoginScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();

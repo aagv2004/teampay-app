@@ -1,5 +1,8 @@
+/// Formas simples para marcar como se pago una deuda.
 enum PaymentMethod { cash, transfer }
 
+/// Deuda entre dos integrantes de un grupo.
+/// fromMemberId debe pagarle a toMemberId.
 class Debt {
   final String id;
   final String expenseId;

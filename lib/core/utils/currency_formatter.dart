@@ -1,5 +1,7 @@
 import 'package:intl/intl.dart';
 
+/// Convierte numeros a formatos legibles para Chile.
+/// Se usa para mostrar montos como pesos chilenos.
 class CurrencyFormatter {
   static final NumberFormat _clpFormatter = NumberFormat.currency(
     locale: 'es_CL',

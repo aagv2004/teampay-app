@@ -5,6 +5,8 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/models/member.dart';
 import '../providers/group_provider.dart';
 
+/// Pantalla para editar nombre e integrantes de un grupo.
+/// El organizador no se puede borrar del grupo.
 class EditGroupScreen extends StatefulWidget {
   final String groupId;
 
@@ -14,12 +16,13 @@ class EditGroupScreen extends StatefulWidget {
   State<EditGroupScreen> createState() => _EditGroupScreenState();
 }
 
+/// Carga el grupo una vez y mantiene cambios locales hasta guardar.
 class _EditGroupScreenState extends State<EditGroupScreen> {
   final _groupNameController = TextEditingController();
   final _memberNameController = TextEditingController();
 
   final List<Member> _members = [];
-  String? _ownerMemberId;
+  String? _organizerMemberId;
 
   bool _loaded = false;
 
@@ -39,7 +42,7 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
 
     _groupNameController.text = group.name;
     _members.addAll(group.members);
-    _ownerMemberId = group.ownerMemberId;
+    _organizerMemberId = group.organizerMemberId;
 
     _loaded = true;
   }
@@ -58,19 +61,22 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
       _members.add(member);
       _memberNameController.clear();
 
-      _ownerMemberId ??= member.id;
+      _organizerMemberId ??= member.id;
     });
   }
 
   void _removeMember(Member member) {
+    if (member.id == _organizerMemberId) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('El organizador debe seguir en el grupo')),
+      );
+      return;
+    }
+
     if (_members.length == 1) return;
 
     setState(() {
       _members.removeWhere((item) => item.id == member.id);
-
-      if (_ownerMemberId == member.id) {
-        _ownerMemberId = _members.first.id;
-      }
     });
   }
 
@@ -84,7 +90,7 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
       return;
     }
 
-    if (_members.isEmpty || _ownerMemberId == null) {
+    if (_members.isEmpty || _organizerMemberId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('El grupo necesita al menos un integrante'),
@@ -97,7 +103,7 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
       groupId: widget.groupId,
       name: groupName,
       members: _members,
-      ownerMemberId: _ownerMemberId!,
+      organizerMemberId: _organizerMemberId!,
     );
 
     Navigator.pop(context);
@@ -135,7 +141,7 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
           const SizedBox(height: 6),
 
           const Text(
-            'Actualiza el nombre, integrantes y owner del grupo.',
+            'Actualiza el nombre y las personas del grupo. Tu sigues como organizador.',
             style: TextStyle(
               color: AppColors.textSecondary,
               fontWeight: FontWeight.w600,
@@ -178,44 +184,33 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
           const SizedBox(height: 10),
 
           ..._members.map((member) {
-            final isOwner = member.id == _ownerMemberId;
+            final isOrganizer = member.id == _organizerMemberId;
 
             return Card(
               child: ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: isOwner
+                  backgroundColor: isOrganizer
                       ? AppColors.primary
                       : avatarBackground,
                   child: Icon(
-                    isOwner
+                    isOrganizer
                         ? Icons.admin_panel_settings_rounded
                         : Icons.person_rounded,
-                    color: isOwner ? Colors.white : AppColors.primary,
+                    color: isOrganizer ? Colors.white : AppColors.primary,
                   ),
                 ),
                 title: Text(
                   member.name,
                   style: const TextStyle(fontWeight: FontWeight.w800),
                 ),
-                subtitle: isOwner
-                    ? const Text('Owner del grupo')
+                subtitle: isOrganizer
+                    ? const Text('Organizador')
                     : const Text('Integrante'),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Radio<String>(
-                      value: member.id,
-                      groupValue: _ownerMemberId,
-                      onChanged: (value) {
-                        if (value == null) return;
-
-                        setState(() {
-                          _ownerMemberId = value;
-                        });
-                      },
-                    ),
                     IconButton(
-                      onPressed: _members.length == 1
+                      onPressed: _members.length == 1 || isOrganizer
                           ? null
                           : () => _removeMember(member),
                       icon: const Icon(Icons.close_rounded),

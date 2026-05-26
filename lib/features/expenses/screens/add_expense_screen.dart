@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:teampayapp/features/groups/providers/group_provider.dart';
 import '../../../core/constants/app_colors.dart';
 
+/// Pantalla para registrar un gasto dentro de un grupo.
+/// Permite elegir quien pago y quienes participan.
 class AddExpenseScreen extends StatefulWidget {
   final String groupId;
 
@@ -12,6 +15,7 @@ class AddExpenseScreen extends StatefulWidget {
   State<AddExpenseScreen> createState() => _AddExpenseScreenState();
 }
 
+/// Mantiene el formulario del gasto antes de guardarlo.
 class _AddExpenseScreenState extends State<AddExpenseScreen> {
   final _titleController = TextEditingController();
   final _amountController = TextEditingController();
@@ -146,9 +150,10 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
           TextField(
             controller: _amountController,
             keyboardType: TextInputType.number,
+            inputFormatters: [_ChileanThousandsInputFormatter()],
             decoration: const InputDecoration(
               labelText: 'Monto',
-              hintText: 'Ej: 12000',
+              hintText: 'Ej: 12.000',
               prefixIcon: Icon(Icons.attach_money_rounded),
             ),
           ),
@@ -163,7 +168,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
           const SizedBox(height: 10),
 
           DropdownButtonFormField<String>(
-            value: _paidByMemberId,
+            initialValue: _paidByMemberId,
             decoration: const InputDecoration(
               prefixIcon: Icon(Icons.account_balance_wallet_rounded),
             ),
@@ -260,5 +265,41 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
         ],
       ),
     );
+  }
+}
+
+/// Formatea el monto con puntos de miles mientras se escribe.
+class _ChileanThousandsInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final digitsOnly = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digitsOnly.isEmpty) {
+      return const TextEditingValue();
+    }
+
+    final formatted = _formatThousands(digitsOnly);
+
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
+
+  String _formatThousands(String value) {
+    final buffer = StringBuffer();
+
+    for (var i = 0; i < value.length; i++) {
+      final remainingDigits = value.length - i;
+      buffer.write(value[i]);
+
+      if (remainingDigits > 1 && remainingDigits % 3 == 1) {
+        buffer.write('.');
+      }
+    }
+
+    return buffer.toString();
   }
 }

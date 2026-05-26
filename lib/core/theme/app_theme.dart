@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../constants/app_colors.dart';
 
+/// Tema claro de la app.
+/// Define estilos comunes para textos, tarjetas, inputs y botones.
 class AppTheme {
   static ThemeData get lightTheme {
     final base = ThemeData.light();

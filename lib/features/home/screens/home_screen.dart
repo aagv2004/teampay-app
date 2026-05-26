@@ -2,59 +2,64 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:teampayapp/core/models/group.dart';
 import 'package:teampayapp/core/utils/currency_formatter.dart';
 import 'package:teampayapp/features/groups/screens/group_detail_screen.dart';
 
+import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_provider.dart';
 import '../../groups/providers/group_provider.dart';
-import '../../../core/constants/app_colors.dart';
 
+/// Dashboard principal de TeamPay.
+/// Resume tus grupos y el balance desde tu punto de vista.
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
-    final name = user?.displayName ?? 'Usuario';
-
     final themeProvider = context.watch<ThemeProvider>();
-    final groups = context.watch<GroupProvider>().groups;
+    final groupProvider = context.watch<GroupProvider>();
+    final user = FirebaseAuth.instance.currentUser;
+    final name =
+        groupProvider.currentUserName ?? user?.displayName ?? 'Usuario';
+    final groups = groupProvider.groups;
+    final currentUserMemberId = groupProvider.currentUserMemberId;
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final allExpenses = groups.expand((group) => group.expenses).toList();
     final allDebts = groups.expand((group) => group.debts).toList();
 
-    final totalSpent = allExpenses.fold<double>(
-      0,
-      (sum, expense) => sum + expense.amount,
+    final debtsByMe = currentUserMemberId == null
+        ? 0.0
+        : allDebts
+              .where(
+                (debt) =>
+                    !debt.isPaid && debt.fromMemberId == currentUserMemberId,
+              )
+              .fold<double>(0, (sum, debt) => sum + debt.remainingAmount);
+
+    final debtsToMe = currentUserMemberId == null
+        ? 0.0
+        : allDebts
+              .where(
+                (debt) =>
+                    !debt.isPaid && debt.toMemberId == currentUserMemberId,
+              )
+              .fold<double>(0, (sum, debt) => sum + debt.remainingAmount);
+
+    final netBalance = debtsToMe - debtsByMe;
+
+    final topOwedToMe = _topGroupDebtInsight(
+      groups,
+      currentUserMemberId,
+      owedToMe: true,
     );
-
-    final totalPending = allDebts
-        .where((debt) => !debt.isPaid)
-        .fold<double>(0, (sum, debt) => sum + debt.remainingAmount);
-
-    final groupWithMostMembers = [...groups]
-      ..sort((a, b) => b.members.length.compareTo(a.members.length));
-
-    final groupWithMostPending =
-        groups.where((group) {
-          final pending = group.debts
-              .where((debt) => !debt.isPaid)
-              .fold<double>(0, (sum, debt) => sum + debt.remainingAmount);
-
-          return pending > 0;
-        }).toList()..sort((a, b) {
-          final pendingA = a.debts
-              .where((debt) => !debt.isPaid)
-              .fold<double>(0, (sum, debt) => sum + debt.remainingAmount);
-
-          final pendingB = b.debts
-              .where((debt) => !debt.isPaid)
-              .fold<double>(0, (sum, debt) => sum + debt.remainingAmount);
-
-          return pendingB.compareTo(pendingA);
-        });
+    final topOwedByMe = _topGroupDebtInsight(
+      groups,
+      currentUserMemberId,
+      owedToMe: false,
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -81,7 +86,7 @@ class HomeScreen extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           const Text(
-            'Este es el resumen general de tus grupos y pagos pendientes.',
+            'Este es el resumen personal de tus grupos y pagos pendientes.',
             style: TextStyle(
               color: AppColors.textSecondary,
               fontWeight: FontWeight.w600,
@@ -90,9 +95,9 @@ class HomeScreen extends StatelessWidget {
           const SizedBox(height: 22),
 
           _BalanceCard(
-            totalSpent: totalSpent,
-            totalPending: totalPending,
-            groupsCount: groups.length,
+            debtsByMe: debtsByMe,
+            debtsToMe: debtsToMe,
+            netBalance: netBalance,
           ),
 
           const SizedBox(height: 18),
@@ -101,22 +106,22 @@ class HomeScreen extends StatelessWidget {
             children: [
               Expanded(
                 child: _InsightCard(
-                  icon: Icons.groups_rounded,
-                  title: 'Más integrantes',
-                  value: groupWithMostMembers.isEmpty
-                      ? 'Sin grupos'
-                      : groupWithMostMembers.first.name,
-                  subtitle: groupWithMostMembers.isEmpty
-                      ? 'Crea tu primer grupo'
-                      : '${groupWithMostMembers.first.members.length} integrantes',
-                  onTap: groupWithMostMembers.isEmpty
+                  icon: Icons.south_west_rounded,
+                  title: 'Te deben mas',
+                  value: topOwedToMe == null
+                      ? 'Sin pendientes'
+                      : topOwedToMe.name,
+                  subtitle: topOwedToMe == null
+                      ? 'Todo al dia'
+                      : CurrencyFormatter.clp(topOwedToMe.amount),
+                  onTap: topOwedToMe == null
                       ? null
                       : () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (_) => GroupDetailScreen(
-                                groupId: groupWithMostMembers.first.id,
+                                groupId: topOwedToMe.groupId,
                               ),
                             ),
                           );
@@ -126,23 +131,21 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: _InsightCard(
-                  icon: Icons.warning_amber_rounded,
-                  title: 'Mayor pendiente',
-                  value: groupWithMostPending.isEmpty
-                      ? 'Sin pendientes'
-                      : groupWithMostPending.first.name,
-                  subtitle: groupWithMostPending.isEmpty
-                      ? 'Todo limpio por ahora 🦖'
-                      : 'Revisar deudas',
+                  icon: Icons.north_east_rounded,
+                  title: 'Debes mas',
+                  value: topOwedByMe == null ? 'Sin deudas' : topOwedByMe.name,
+                  subtitle: topOwedByMe == null
+                      ? 'Todo al dia'
+                      : CurrencyFormatter.clp(topOwedByMe.amount),
                   highlighted: true,
-                  onTap: groupWithMostPending.isEmpty
+                  onTap: topOwedByMe == null
                       ? null
                       : () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (_) => GroupDetailScreen(
-                                groupId: groupWithMostPending.first.id,
+                                groupId: topOwedByMe.groupId,
                               ),
                             ),
                           );
@@ -155,7 +158,7 @@ class HomeScreen extends StatelessWidget {
           const SizedBox(height: 18),
 
           const Text(
-            'Últimos gastos registrados',
+            'Ultimos gastos registrados',
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 12),
@@ -176,15 +179,63 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
+/// Encuentra el grupo donde mas debes o donde mas te deben.
+_GroupDebtInsight? _topGroupDebtInsight(
+  List<Group> groups,
+  String? currentUserMemberId, {
+  required bool owedToMe,
+}) {
+  if (currentUserMemberId == null) return null;
+
+  _GroupDebtInsight? topInsight;
+
+  for (final group in groups) {
+    final amount = group.debts
+        .where(
+          (debt) =>
+              !debt.isPaid &&
+              (owedToMe
+                  ? debt.toMemberId == currentUserMemberId
+                  : debt.fromMemberId == currentUserMemberId),
+        )
+        .fold<double>(0, (sum, debt) => sum + debt.remainingAmount);
+
+    if (amount <= 0) continue;
+    if (topInsight == null || amount > topInsight.amount) {
+      topInsight = _GroupDebtInsight(
+        groupId: group.id,
+        name: group.name,
+        amount: amount,
+      );
+    }
+  }
+
+  return topInsight;
+}
+
+/// Dato resumido para las tarjetas del dashboard.
+class _GroupDebtInsight {
+  final String groupId;
+  final String name;
+  final double amount;
+
+  const _GroupDebtInsight({
+    required this.groupId,
+    required this.name,
+    required this.amount,
+  });
+}
+
+/// Tarjeta grande con cuanto debes, cuanto te deben y balance neto.
 class _BalanceCard extends StatelessWidget {
-  final double totalSpent;
-  final double totalPending;
-  final int groupsCount;
+  final double debtsByMe;
+  final double debtsToMe;
+  final double netBalance;
 
   const _BalanceCard({
-    required this.totalSpent,
-    required this.totalPending,
-    required this.groupsCount,
+    required this.debtsByMe,
+    required this.debtsToMe,
+    required this.netBalance,
   });
 
   @override
@@ -196,7 +247,7 @@ class _BalanceCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Balance general',
+              'Resumen personal',
               style: TextStyle(
                 color: AppColors.textSecondary,
                 fontWeight: FontWeight.w700,
@@ -204,19 +255,21 @@ class _BalanceCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              CurrencyFormatter.clp(totalPending),
+              CurrencyFormatter.clp(netBalance.abs()),
               style: TextStyle(
-                color: totalPending > 0
-                    ? AppColors.primary
-                    : AppColors.primaryDark,
+                color: netBalance < 0 ? AppColors.warning : AppColors.primary,
                 fontSize: 36,
                 fontWeight: FontWeight.w900,
               ),
             ),
             const SizedBox(height: 4),
-            const Text(
-              'Pendiente total en todos tus grupos',
-              style: TextStyle(
+            Text(
+              netBalance == 0
+                  ? 'Balance neto: estas al dia'
+                  : netBalance < 0
+                  ? 'Balance neto: debes mas de lo que te deben'
+                  : 'Balance neto: te deben mas de lo que debes',
+              style: const TextStyle(
                 color: AppColors.textSecondary,
                 fontWeight: FontWeight.w600,
               ),
@@ -226,15 +279,15 @@ class _BalanceCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: _BalanceMiniBox(
-                    title: 'Total gastado',
-                    value: CurrencyFormatter.clp(totalSpent),
+                    title: 'Debes',
+                    value: CurrencyFormatter.clp(debtsByMe),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: _BalanceMiniBox(
-                    title: 'Grupos',
-                    value: '$groupsCount',
+                    title: 'Te deben',
+                    value: CurrencyFormatter.clp(debtsToMe),
                   ),
                 ),
               ],
@@ -246,6 +299,7 @@ class _BalanceCard extends StatelessWidget {
   }
 }
 
+/// Caja pequena para un dato del resumen personal.
 class _BalanceMiniBox extends StatelessWidget {
   final String title;
   final String value;
@@ -284,6 +338,7 @@ class _BalanceMiniBox extends StatelessWidget {
   }
 }
 
+/// Tarjeta de dato rapido que puede llevar al detalle de un grupo.
 class _InsightCard extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -303,81 +358,74 @@ class _InsightCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final isClickable = onTap != null;
+    final backgroundColor = highlighted
+        ? isDark
+              ? AppColors.warning.withValues(alpha: 0.14)
+              : AppColors.warningBackground
+        : isDark
+        ? AppColors.darkSurfaceVariant
+        : AppColors.lightSurfaceVariant;
+    final iconColor = highlighted ? AppColors.warning : AppColors.primary;
 
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                CircleAvatar(
-                  radius: 24,
-                  backgroundColor: highlighted
-                      ? AppColors.warningBackground
-                      : Theme.of(context).brightness == Brightness.dark
-                      ? AppColors.darkSurfaceVariant
-                      : AppColors.lightSurfaceVariant,
-                  child: Icon(
-                    icon,
-                    size: 30,
-                    color: highlighted ? AppColors.warning : AppColors.primary,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(22),
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 22,
+                    backgroundColor: backgroundColor,
+                    child: Icon(icon, size: 26, color: iconColor),
                   ),
-                ),
-
-                const SizedBox(height: 14),
-
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-
-                const SizedBox(height: 4),
-
-                Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 16,
-                  ),
-                ),
-
-                const SizedBox(height: 2),
-
-                Text(
-                  subtitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-
-                if (isClickable) ...[
-                  const SizedBox(height: 6),
-                  const Icon(
-                    Icons.touch_app_rounded,
-                    size: 15,
-                    color: AppColors.textSecondary,
-                  ),
+                  const Spacer(),
+                  if (isClickable)
+                    const Icon(
+                      Icons.touch_app_rounded,
+                      color: AppColors.textSecondary,
+                      size: 20,
+                    ),
                 ],
-              ],
-            ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                title,
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -385,6 +433,7 @@ class _InsightCard extends StatelessWidget {
   }
 }
 
+/// Fila para mostrar un gasto reciente en el dashboard.
 class _MovementTile extends StatelessWidget {
   final String title;
   final String subtitle;

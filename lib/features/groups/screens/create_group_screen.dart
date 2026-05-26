@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../providers/group_provider.dart';
 
+/// Pantalla para crear un grupo nuevo.
+/// El usuario actual queda como organizador e integrante inicial.
 class CreateGroupScreen extends StatefulWidget {
   const CreateGroupScreen({super.key});
 
@@ -11,12 +13,12 @@ class CreateGroupScreen extends StatefulWidget {
   State<CreateGroupScreen> createState() => _CreateGroupScreenState();
 }
 
+/// Guarda temporalmente el nombre del grupo y personas adicionales.
 class _CreateGroupScreenState extends State<CreateGroupScreen> {
   final _groupNameController = TextEditingController();
   final _memberNameController = TextEditingController();
 
   final List<String> _members = [];
-  int _ownerIndex = 0;
 
   @override
   void dispose() {
@@ -37,14 +39,8 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
   }
 
   void _removeMember(int index) {
-    if (_members.length == 1) return;
-
     setState(() {
       _members.removeAt(index);
-
-      if (_ownerIndex >= _members.length) {
-        _ownerIndex = 0;
-      }
     });
   }
 
@@ -58,17 +54,9 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
       return;
     }
 
-    if (_members.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Agrega al menos un integrante')),
-      );
-      return;
-    }
-
     context.read<GroupProvider>().createGroup(
       name: groupName,
       memberNames: _members,
-      ownerIndex: _ownerIndex,
     );
 
     Navigator.pop(context);
@@ -95,7 +83,17 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
           const SizedBox(height: 6),
 
           const Text(
-            'Crea un grupo para dividir gastos con amigos, compañeros o familia.',
+            'Crea un grupo para dividir gastos con amigos, companeros o familia.',
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          const Text(
+            'Al crear este grupo, tu quedaras como organizador. Podras agregar personas y registrar gastos.',
             style: TextStyle(
               color: AppColors.textSecondary,
               fontWeight: FontWeight.w600,
@@ -132,7 +130,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
           const SizedBox(height: 18),
 
           const Text(
-            'Integrantes',
+            'Personas adicionales',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
           ),
 
@@ -142,7 +140,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
             const Padding(
               padding: EdgeInsets.only(bottom: 6),
               child: Text(
-                'Todavía no agregas integrantes.',
+                'Todavia no agregas integrantes adicionales. Por ahora solo estaras tu.',
                 style: TextStyle(color: AppColors.textSecondary),
               ),
             ),
@@ -150,46 +148,25 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
           ..._members.asMap().entries.map((entry) {
             final index = entry.key;
             final member = entry.value;
-            final isOwner = index == _ownerIndex;
-
             return Card(
               child: ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: isOwner
-                      ? AppColors.primary
-                      : avatarBackground,
-                  child: Icon(
-                    isOwner
-                        ? Icons.admin_panel_settings_rounded
-                        : Icons.person_rounded,
-                    color: isOwner ? Colors.white : AppColors.primary,
+                  backgroundColor: avatarBackground,
+                  child: const Icon(
+                    Icons.person_rounded,
+                    color: AppColors.primary,
                   ),
                 ),
                 title: Text(
                   member,
                   style: const TextStyle(fontWeight: FontWeight.w800),
                 ),
-                subtitle: isOwner
-                    ? const Text('Owner del grupo')
-                    : const Text('Integrante'),
+                subtitle: const Text('Integrante'),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Radio<int>(
-                      value: index,
-                      groupValue: _ownerIndex,
-                      onChanged: (value) {
-                        if (value == null) return;
-
-                        setState(() {
-                          _ownerIndex = value;
-                        });
-                      },
-                    ),
                     IconButton(
-                      onPressed: _members.length == 1
-                          ? null
-                          : () => _removeMember(index),
+                      onPressed: () => _removeMember(index),
                       icon: const Icon(Icons.close_rounded),
                     ),
                   ],

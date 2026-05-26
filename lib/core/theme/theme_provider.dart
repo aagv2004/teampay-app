@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+/// Guarda el modo de tema elegido.
+/// Cuando cambia, avisa a la app para repintar claro/oscuro.
 class ThemeProvider extends ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.system;
 

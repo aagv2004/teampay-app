@@ -4,10 +4,21 @@ import 'member.dart';
 import 'expense.dart';
 import 'debt.dart';
 
+/// Grupo de gastos creado por el usuario autenticado.
+/// Guarda integrantes, gastos, deudas y datos visibles del organizador.
 class Group {
   final String id;
   final String name;
-  final String ownerMemberId;
+
+  /// ID del integrante que representa al organizador dentro del grupo.
+  final String organizerMemberId;
+
+  /// UID real de Firebase Auth del usuario que organiza el grupo.
+  final String organizerUserId;
+
+  /// Datos visibles del organizador para mostrar sin consultar Auth siempre.
+  final String organizerName;
+  final String organizerEmail;
   final List<Member> members;
   final List<Expense> expenses;
   final List<Debt> debts;
@@ -16,7 +27,10 @@ class Group {
   const Group({
     required this.id,
     required this.name,
-    required this.ownerMemberId,
+    required this.organizerMemberId,
+    required this.organizerUserId,
+    required this.organizerName,
+    required this.organizerEmail,
     required this.members,
     required this.expenses,
     required this.debts,
@@ -26,7 +40,10 @@ class Group {
   Group copyWith({
     String? id,
     String? name,
-    String? ownerMemberId,
+    String? organizerMemberId,
+    String? organizerUserId,
+    String? organizerName,
+    String? organizerEmail,
     List<Member>? members,
     List<Expense>? expenses,
     List<Debt>? debts,
@@ -35,7 +52,10 @@ class Group {
     return Group(
       id: id ?? this.id,
       name: name ?? this.name,
-      ownerMemberId: ownerMemberId ?? this.ownerMemberId,
+      organizerMemberId: organizerMemberId ?? this.organizerMemberId,
+      organizerUserId: organizerUserId ?? this.organizerUserId,
+      organizerName: organizerName ?? this.organizerName,
+      organizerEmail: organizerEmail ?? this.organizerEmail,
       members: members ?? this.members,
       expenses: expenses ?? this.expenses,
       debts: debts ?? this.debts,
@@ -47,7 +67,10 @@ class Group {
     return {
       'id': id,
       'name': name,
-      'ownerMemberId': ownerMemberId,
+      'organizerMemberId': organizerMemberId,
+      'organizerUserId': organizerUserId,
+      'organizerName': organizerName,
+      'organizerEmail': organizerEmail,
       'members': members.map((member) => member.toMap()).toList(),
       'expenses': expenses.map((expense) => expense.toMap()).toList(),
       'debts': debts.map((debt) => debt.toMap()).toList(),
@@ -60,7 +83,11 @@ class Group {
     return Group(
       id: map['id'] ?? '',
       name: map['name'] ?? '',
-      ownerMemberId: map['ownerMemberId'] ?? '',
+      // Permite abrir grupos guardados antes del renombrado.
+      organizerMemberId: map['organizerMemberId'] ?? map['ownerMemberId'] ?? '',
+      organizerUserId: map['organizerUserId'] ?? map['userId'] ?? '',
+      organizerName: map['organizerName'] ?? '',
+      organizerEmail: map['organizerEmail'] ?? '',
       members: (map['members'] as List<dynamic>? ?? [])
           .map((member) => Member.fromMap(Map<String, dynamic>.from(member)))
           .toList(),

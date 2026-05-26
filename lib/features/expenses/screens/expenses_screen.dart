@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:teampayapp/core/models/group.dart';
 import 'package:provider/provider.dart';
 import 'package:teampayapp/core/models/member.dart';
 import 'package:teampayapp/core/utils/currency_formatter.dart';
 
 import '../../../core/constants/app_colors.dart';
+import 'add_expense_screen.dart';
 import '../../groups/providers/group_provider.dart';
 
+/// Pantalla que lista gastos agrupados por grupo.
+/// Sirve para revisar rapidamente que se ha registrado.
 class ExpensesScreen extends StatelessWidget {
   const ExpensesScreen({super.key});
 
@@ -118,10 +122,95 @@ class ExpensesScreen extends StatelessWidget {
           }),
         ],
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _startAddExpenseFlow(context, groups),
+        icon: const Icon(Icons.add_rounded),
+        label: const Text('Gasto'),
+      ),
     );
   }
 }
 
+/// Decide si abrir directo o pedir elegir grupo antes de crear gasto.
+void _startAddExpenseFlow(BuildContext context, List<Group> groups) {
+  if (groups.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Crea un grupo antes de registrar gastos')),
+    );
+    return;
+  }
+
+  if (groups.length == 1) {
+    _openAddExpenseScreen(context, groups.first);
+    return;
+  }
+
+  _showGroupPicker(context, groups);
+}
+
+/// Abre el formulario de gasto para el grupo elegido.
+void _openAddExpenseScreen(BuildContext context, Group group) {
+  Navigator.push(
+    context,
+    MaterialPageRoute(builder: (_) => AddExpenseScreen(groupId: group.id)),
+  );
+}
+
+/// Muestra una lista simple de grupos para asociar el nuevo gasto.
+void _showGroupPicker(BuildContext context, List<Group> groups) {
+  showModalBottomSheet(
+    context: context,
+    showDragHandle: true,
+    builder: (sheetContext) {
+      return SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Elige un grupo',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'El gasto quedara asociado al grupo que selecciones.',
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ...groups.map((group) {
+                return Card(
+                  child: ListTile(
+                    leading: const CircleAvatar(
+                      backgroundColor: AppColors.primary,
+                      child: Icon(Icons.groups_rounded, color: Colors.white),
+                    ),
+                    title: Text(
+                      group.name,
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                    subtitle: Text('${group.members.length} integrantes'),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () {
+                      Navigator.pop(sheetContext);
+                      _openAddExpenseScreen(context, group);
+                    },
+                  ),
+                );
+              }),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
+/// Busca quien pago usando el ID guardado en el gasto.
 Member? _findMemberById(List<Member> members, String memberId) {
   for (final member in members) {
     if (member.id == memberId) {

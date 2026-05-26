@@ -6,6 +6,8 @@ import 'package:teampayapp/features/groups/providers/group_provider.dart';
 import '../../home/screens/main_navigation_screen.dart';
 import '../screens/login_screen.dart';
 
+/// Decide que pantalla mostrar segun si hay usuario logueado.
+/// Tambien conecta el GroupProvider con el usuario actual.
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
 
@@ -22,7 +24,11 @@ class AuthGate extends StatelessWidget {
         final groupProvider = context.read<GroupProvider>();
 
         if (user != null) {
-          groupProvider.bindUser(user.uid);
+          groupProvider.bindUser(
+            userId: user.uid,
+            displayName: user.displayName,
+            email: user.email,
+          );
           return const MainNavigationScreen();
         }
 
@@ -33,6 +39,7 @@ class AuthGate extends StatelessWidget {
   }
 }
 
+/// Pantalla corta mientras Firebase confirma la sesion.
 class _LoadingScreen extends StatelessWidget {
   const _LoadingScreen();
 

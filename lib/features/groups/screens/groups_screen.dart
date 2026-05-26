@@ -6,6 +6,8 @@ import 'create_group_screen.dart';
 import 'group_detail_screen.dart';
 import '../../../core/constants/app_colors.dart';
 
+/// Lista todos los grupos del usuario actual.
+/// Desde aqui se entra al detalle o se crea un grupo nuevo.
 class GroupsScreen extends StatelessWidget {
   const GroupsScreen({super.key});
 
@@ -99,6 +101,8 @@ class GroupsScreen extends StatelessWidget {
   }
 }
 
+/// Tarjeta resumida de un grupo.
+/// Muestra integrantes, total gastado y pendiente.
 class _GroupListCard extends StatelessWidget {
   final String name;
   final int membersCount;
@@ -147,7 +151,7 @@ class _GroupListCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '$membersCount integrantes',
+                          '$membersCount integrantes\n· Creado por ti',
                           style: const TextStyle(
                             color: AppColors.textSecondary,
                             fontWeight: FontWeight.w600,
@@ -165,14 +169,14 @@ class _GroupListCard extends StatelessWidget {
                   Expanded(
                     child: _MiniInfoBox(
                       title: 'Total',
-                      value: '${CurrencyFormatter.clp(total)}',
+                      value: CurrencyFormatter.clp(total),
                     ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: _MiniInfoBox(
                       title: 'Pendiente',
-                      value: '${CurrencyFormatter.clp(pending)}',
+                      value: CurrencyFormatter.clp(pending),
                       highlight: hasPending,
                     ),
                   ),
@@ -186,6 +190,7 @@ class _GroupListCard extends StatelessWidget {
   }
 }
 
+/// Caja pequena para mostrar un dato dentro de una tarjeta.
 class _MiniInfoBox extends StatelessWidget {
   final String title;
   final String value;

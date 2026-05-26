@@ -5,6 +5,8 @@ import '../../groups/screens/groups_screen.dart';
 import '../../profile/screens/profile_screen.dart';
 import 'home_screen.dart';
 
+/// Contenedor de las pestanas principales de la app.
+/// Mantiene el indice actual del bottom nav.
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
 
@@ -12,6 +14,7 @@ class MainNavigationScreen extends StatefulWidget {
   State<MainNavigationScreen> createState() => _MainNavigationScreenState();
 }
 
+/// Cambia la pantalla visible cuando el usuario toca una pestana.
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int currentIndex = 0;
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+/// Barra inferior usada para moverse entre las secciones principales.
 class AppBottomNav extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;

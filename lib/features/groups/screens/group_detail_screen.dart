@@ -8,6 +8,8 @@ import '../../../core/constants/app_colors.dart';
 import 'edit_group_screen.dart';
 import '../../expenses/screens/add_expense_screen.dart';
 
+/// Detalle completo de un grupo.
+/// Muestra integrantes, deudas, gastos y acciones del grupo.
 class GroupDetailScreen extends StatelessWidget {
   final String groupId;
 
@@ -24,8 +26,10 @@ class GroupDetailScreen extends StatelessWidget {
       );
     }
 
-    final owner = _findMemberById(group.members, group.ownerMemberId);
-    final ownerName = owner?.name ?? 'integrante eliminado';
+    final organizerName = group.organizerName.isNotEmpty
+        ? group.organizerName
+        : _findMemberById(group.members, group.organizerMemberId)?.name ??
+              'integrante eliminado';
 
     final total = group.expenses.fold<double>(
       0,
@@ -65,7 +69,7 @@ class GroupDetailScreen extends StatelessWidget {
             groupName: group.name,
             total: CurrencyFormatter.clp(total),
             members:
-                '${group.members.length} integrantes · Administrado por $ownerName',
+                '${group.members.length} integrantes · Organizador: $organizerName',
             pending: CurrencyFormatter.clp(pending),
           ),
 
@@ -80,6 +84,22 @@ class GroupDetailScreen extends StatelessWidget {
                       'Este grupo todavía no tiene integrantes registrados.',
                 )
               : _MembersPreview(members: group.members),
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => EditGroupScreen(groupId: group.id),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.person_add_alt_1_rounded),
+              label: const Text('Agregar integrantes'),
+            ),
+          ),
 
           const SizedBox(height: 18),
           const _SectionTitle(title: 'Deudas del grupo'),
@@ -87,7 +107,8 @@ class GroupDetailScreen extends StatelessWidget {
             const _EmptyState(
               icon: Icons.payments_outlined,
               title: 'Sin deudas',
-              message: 'Todavía no existen deudas registradas en este grupo.',
+              message:
+                  'Cuando crees gastos, se calcularan automaticamente entre los integrantes.',
             )
           else
             ...group.debts.map((debt) {
@@ -103,7 +124,7 @@ class GroupDetailScreen extends StatelessWidget {
               return _DebtTile(
                 name: fromMemberName,
                 status: debt.statusLabel,
-                amount: '${CurrencyFormatter.clp(debt.remainingAmount)}',
+                amount: CurrencyFormatter.clp(debt.remainingAmount),
                 detail:
                     'Debe a $toMemberName · Pagado: ${CurrencyFormatter.clp(debt.paidAmount)} · ${debt.paymentMethodLabel}',
                 isPaid: debt.isPaid,
@@ -143,9 +164,27 @@ class GroupDetailScreen extends StatelessWidget {
               return _ExpenseTile(
                 title: expense.title,
                 subtitle: '$payerName pagó todo',
-                amount: '${CurrencyFormatter.clp(expense.amount)}',
+                amount: CurrencyFormatter.clp(expense.amount),
               );
             }),
+          if (group.expenses.isEmpty) ...[
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => AddExpenseScreen(groupId: group.id),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.add_card_rounded),
+                label: const Text('Agregar gasto'),
+              ),
+            ),
+          ],
         ],
       ),
 
@@ -165,6 +204,7 @@ class GroupDetailScreen extends StatelessWidget {
   }
 }
 
+/// Encabezado con resumen principal del grupo.
 class _GroupHeaderCard extends StatelessWidget {
   final String groupName;
   final String total;
@@ -217,6 +257,7 @@ class _GroupHeaderCard extends StatelessWidget {
   }
 }
 
+/// Bloque pequeno para mostrar una metrica del grupo.
 class _MiniStat extends StatelessWidget {
   final String title;
   final String value;
@@ -255,6 +296,7 @@ class _MiniStat extends StatelessWidget {
   }
 }
 
+/// Titulo reutilizable para separar secciones.
 class _SectionTitle extends StatelessWidget {
   final String title;
 
@@ -269,6 +311,7 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
+/// Fila visual para una deuda entre integrantes.
 class _DebtTile extends StatelessWidget {
   final String name;
   final String status;
@@ -351,6 +394,7 @@ class _DebtTile extends StatelessWidget {
   }
 }
 
+/// Fila visual para un gasto registrado.
 class _ExpenseTile extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -381,6 +425,7 @@ class _ExpenseTile extends StatelessWidget {
   }
 }
 
+/// Muestra integrantes como etiquetas compactas.
 class _MembersPreview extends StatelessWidget {
   final List<Member> members;
 
@@ -426,6 +471,7 @@ class _MembersPreview extends StatelessWidget {
   }
 }
 
+/// Mensaje reutilizable cuando una seccion no tiene datos.
 class _EmptyState extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -466,6 +512,7 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
+/// Pide confirmacion antes de eliminar el grupo.
 void _confirmDeleteGroup(BuildContext context, String groupId) {
   showDialog(
     context: context,
@@ -496,6 +543,7 @@ void _confirmDeleteGroup(BuildContext context, String groupId) {
   );
 }
 
+/// Abre el formulario inferior para registrar un pago de deuda.
 void _showRegisterPaymentSheet({
   required BuildContext context,
   required String groupId,
@@ -548,7 +596,7 @@ void _showRegisterPaymentSheet({
                 const SizedBox(height: 18),
 
                 DropdownButtonFormField<PaymentMethod>(
-                  value: selectedMethod,
+                  initialValue: selectedMethod,
                   decoration: const InputDecoration(
                     labelText: 'Método de pago',
                     prefixIcon: Icon(Icons.payments_rounded),
@@ -629,6 +677,7 @@ void _showRegisterPaymentSheet({
   );
 }
 
+/// Busca un integrante por su ID dentro del grupo.
 Member? _findMemberById(List<Member> members, String memberId) {
   for (final member in members) {
     if (member.id == memberId) {

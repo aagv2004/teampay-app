@@ -2,6 +2,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 
+/// Pantalla de perfil del usuario autenticado.
+/// Por ahora muestra datos simples y permite cerrar sesion.
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
@@ -58,6 +60,7 @@ class ProfileScreen extends StatelessWidget {
   }
 }
 
+/// Tarjeta superior con nombre y correo del usuario.
 class _ProfileHeader extends StatelessWidget {
   const _ProfileHeader();
 
@@ -98,6 +101,7 @@ class _ProfileHeader extends StatelessWidget {
   }
 }
 
+/// Bloque visual con estadisticas de ejemplo del perfil.
 class _ProfileBentoStats extends StatelessWidget {
   const _ProfileBentoStats();
 
@@ -138,6 +142,7 @@ class _ProfileBentoStats extends StatelessWidget {
   }
 }
 
+/// Tarjeta chica usada dentro de las estadisticas del perfil.
 class _SmallBentoCard extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -196,6 +201,7 @@ class _SmallBentoCard extends StatelessWidget {
   }
 }
 
+/// Tarjeta ancha para destacar un dato del perfil.
 class _WideBentoCard extends StatelessWidget {
   final IconData icon;
   final String title;

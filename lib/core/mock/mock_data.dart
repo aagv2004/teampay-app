@@ -3,6 +3,8 @@ import '../models/expense.dart';
 import '../models/group.dart';
 import '../models/member.dart';
 
+/// Datos de ejemplo para probar pantallas sin depender de Firebase.
+/// No son datos reales del usuario.
 final mockMembers = [
   Member(id: 'm1', name: 'Alejandro'),
   Member(id: 'm2', name: 'Beatriz'),
@@ -19,6 +21,7 @@ final mockMembers = [
   Member(id: 'm13', name: 'Diego'),
 ];
 
+/// Gastos de ejemplo usados junto a los integrantes mock.
 final mockExpenses = [
   Expense(
     id: 'e1',
@@ -40,6 +43,7 @@ final mockExpenses = [
   ),
 ];
 
+/// Deudas de ejemplo para probar estados pendiente/parcial/pagado.
 final mockDebts = [
   Debt(
     id: 'd1',
@@ -91,11 +95,15 @@ final mockDebts = [
   ),
 ];
 
+/// Grupos completos de ejemplo con integrantes, gastos y deudas.
 final mockGroups = [
   Group(
     id: 'g1',
     name: 'Viaje escolar',
-    ownerMemberId: 'm1',
+    organizerMemberId: 'm1',
+    organizerUserId: 'mock-user-1',
+    organizerName: 'Alejandro',
+    organizerEmail: 'alejandro@example.com',
     members: mockMembers,
     expenses: mockExpenses,
     debts: mockDebts,
@@ -104,7 +112,10 @@ final mockGroups = [
   Group(
     id: 'g2',
     name: 'Departamento',
-    ownerMemberId: 'm11',
+    organizerMemberId: 'm11',
+    organizerUserId: 'mock-user-2',
+    organizerName: 'Pedro',
+    organizerEmail: 'pedro@example.com',
     members: [
       Member(id: 'm11', name: 'Pedro'),
       Member(id: 'm12', name: 'Juan'),

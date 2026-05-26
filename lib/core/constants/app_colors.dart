@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+/// Paleta central de colores de TeamPay.
+/// Si quieres ajustar el look general, este suele ser el primer lugar.
 class AppColors {
   // Light
   static const lightBackground = Color(0xFFF7F8FA);

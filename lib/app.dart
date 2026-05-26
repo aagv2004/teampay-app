@@ -7,6 +7,8 @@ import 'core/theme/dark_theme.dart';
 
 import 'features/auth/widgets/auth_gate.dart';
 
+/// Widget raiz de TeamPay.
+/// Aqui se conectan temas y la entrada por autenticacion.
 class TeamPayApp extends StatelessWidget {
   const TeamPayApp({super.key});
 

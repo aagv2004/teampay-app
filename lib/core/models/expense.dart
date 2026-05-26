@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+/// Gasto registrado dentro de un grupo.
+/// Guarda quien pago y entre que integrantes se divide.
 class Expense {
   final String id;
   final String groupId;

@@ -1,5 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 
+/// Servicio simple para iniciar y cerrar sesion con Firebase Auth.
+/// Sirve como punto unico si despues quieres ordenar mas la autenticacion.
 class AuthService {
   AuthService(this._auth);
 
