@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import '../../../core/constants/app_colors.dart';
 
 /// Pantalla de perfil del usuario autenticado.
@@ -17,6 +18,8 @@ class ProfileScreen extends StatelessWidget {
           const _ProfileHeader(),
           const SizedBox(height: 22),
           const _ProfileBentoStats(),
+          const SizedBox(height: 24),
+          const _AppVersionCard(),
           const SizedBox(height: 24),
 
           SizedBox(
@@ -56,6 +59,85 @@ class ProfileScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Tarjeta que muestra la version instalada de la app.
+class _AppVersionCard extends StatelessWidget {
+  const _AppVersionCard();
+
+  static final Future<PackageInfo> _packageInfoFuture =
+      PackageInfo.fromPlatform();
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<PackageInfo>(
+      future: _packageInfoFuture,
+      builder: (context, snapshot) {
+        final hasError = snapshot.hasError;
+
+        final versionText = hasError
+            ? 'Versión no disponible'
+            : snapshot.data == null
+            ? 'Cargando versión...'
+            : '${snapshot.data!.version}+${snapshot.data!.buildNumber}';
+
+        final subtitleText = hasError
+            ? 'No se pudo leer la metadata del build'
+            : snapshot.data == null
+            ? 'Leyendo la metadata del build'
+            : 'Versión marcada desde pubspec.yaml';
+
+        return Card(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 28,
+                  backgroundColor: AppColors.primary.withValues(alpha: 0.14),
+                  child: const Icon(
+                    Icons.verified_rounded,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Versión de la app',
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        versionText,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitleText,
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
